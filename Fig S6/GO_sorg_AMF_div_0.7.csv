@@ -1,0 +1,28 @@
+GO term,Ontology,Description,Number of genes,input ,Number in BG/Ref,Ref,Richfactor,p-value,FDR
+GO:0016310,P,phosphorylation,28,132,1299,15420,2.518020855,5.20E-06,0.00088
+GO:0006468,P,protein phosphorylation,27,132,1217,15420,2.591693434,4.70E-06,0.00088
+GO:0036211,P,protein modification process,31,132,1589,15420,2.279020539,1.10E-05,0.00091
+GO:0006464,P,cellular protein modification process,31,132,1589,15420,2.279020539,1.10E-05,0.00091
+GO:0055085,P,transmembrane transport,18,132,665,15420,3.161995899,1.90E-05,0.001
+GO:0043412,P,macromolecule modification,31,132,1629,15420,2.223059323,1.80E-05,0.001
+GO:0006796,P,phosphate-containing compound metabolic process,29,132,1574,15420,2.152304493,6.30E-05,0.0027
+GO:0006793,P,phosphorus metabolic process,29,132,1576,15420,2.149573143,6.40E-05,0.0027
+GO:0044260,P,cellular macromolecule metabolic process,48,132,3759,15420,1.491692665,0.0015,0.049
+GO:0006810,P,transport,22,132,1294,15420,1.986089645,0.0016,0.049
+GO:0051234,P,establishment of localization,22,132,1301,15420,1.975403536,0.0017,0.049
+GO:0051179,P,localization,22,132,1305,15420,1.969348659,0.0018,0.049
+GO:0016301,F,kinase activity,29,132,1343,15420,2.522507277,3.30E-06,0.00026
+GO:0016773,F,"phosphotransferase activity, alcohol group as acceptor",29,132,1341,15420,2.526269405,3.20E-06,0.00026
+GO:0004672,F,protein kinase activity,28,132,1213,15420,2.696545005,1.40E-06,0.00026
+GO:0016772,F,"transferase activity, transferring phosphorus-containing groups",31,132,1533,15420,2.362272431,5.30E-06,0.00031
+GO:0030246,F,carbohydrate binding,10,132,189,15420,6.180856181,7.60E-06,0.00036
+GO:0016740,F,transferase activity,45,132,2793,15420,1.882140416,9.50E-06,0.00038
+GO:0022857,F,transmembrane transporter activity,16,132,544,15420,3.435828877,2.10E-05,0.00072
+GO:0005215,F,transporter activity,19,132,770,15420,2.882526564,3.70E-05,0.0011
+GO:0030247,F,polysaccharide binding,6,132,96,15420,7.301136364,0.00023,0.0054
+GO:0001871,F,pattern binding,6,132,96,15420,7.301136364,0.00023,0.0054
+GO:0015297,F,antiporter activity,5,132,87,15420,6.71368861,0.0011,0.024
+GO:0016020,C,membrane,31,132,1847,15420,1.960673328,0.00018,0.0015
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,

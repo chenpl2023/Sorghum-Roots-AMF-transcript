@@ -1,0 +1,20 @@
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig S3")
+data <- read.csv("ave_function1TPM.csv",header = T,row.names = 1)
+data <- data[,-c(43:66)]
+data <- data [which(rowSums(data[,c(3:42)])>0),]
+groupc <- read.csv("group1.csv",header = T,row.names = 1)
+groupc <- subset(groupc, groupc$Compartment=="Root")
+groupd <- data.frame(groupc[,-c(1,3)])
+row.names(groupd) <- row.names(groupc)
+colnames(groupd)[1] <- 'Treat'
+library(pheatmap)
+
+ann_colors = list(Treat=c(Control="#DDBC95",Preflowering="#B38867",Postflowering="#CDCDC0"),Function=c(MAPK="#7E6148",AMT="#E64B35",AQPF="#4DBBD5",AAT='maroon',FAT="#00A087",Mating="#3C5488",pheromone="#F39B7F",PT="#8491B4",spore="#91D1C2",Sugar="#DC0000",Trehalose="#B09C85"))
+coul <- colorRampPalette(c("#5bc0eb",'black',"#ECE700"))(100)
+
+data1 <- data[,-c(1,2)]
+group_data <- data.frame(data[,c(2)])
+row.names(group_data)=row.names(data)
+colnames(group_data) <- c("Function")
+
+pheatmap(data1,scale="row", annotation_row = group_data,annotation_col = groupd,show_rownames=F,cluster_cols=F,cluster_rows=F,labels_col = groupc$Week,angle_col = 0,fontsize_col = 8,annotation_colors = ann_colors,border=FALSE,cellwidth = 12, cellheight = 1.1,color=coul,filename ="Function_gene_all.pdf")

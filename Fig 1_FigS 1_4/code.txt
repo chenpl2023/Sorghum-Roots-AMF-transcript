@@ -1,0 +1,355 @@
+#Fig 1a
+setwd("E:/陈沛霖-病原菌/宏转录/kaiju")
+zotu <- read.csv("Class.csv",header = T,row.names = 1)
+zg <- read.csv("group.csv",header = T,row.names = 1)
+library(reshape2)
+library(ggplot2)
+library(MASS)
+library(splitstackshape)
+library(tidyverse)
+
+barplot1 <- function(kindom){
+zotu <- subset(zotu, zotu$Phylum==kindom)
+row.names(zotu)<-zotu$Class
+zotu <- zotu[,-c(1,2)]
+zotu <- data.frame(t(zotu))
+
+total<-apply(zotu, 1, sum); 
+fung.relabu<-data.frame(lapply(zotu, function(x) {  x / total  }) )
+fung.L<-fung.relabu
+fung.L <- fung.L[,order(-colSums(fung.L))]
+env.L<-zg
+row.names(fung.L)==row.names(env.L)
+fung.L.lev<-aggregate(fung.L,by=list(env.L$Group) , mean)
+fung.L1<-fung.L.lev[,c(1,2:11)]
+fung.L1 <- melt(fung.L1,id.vars = "Group.1")
+fung.L1<-cSplit(fung.L1, "Group.1", "_")
+names(fung.L1)<-c("Fungi","Relative_Abundance","Type","Compartment","Treat","Week")
+
+fung.L2<-fung.L.lev[,c(1,12:ncol(fung.L.lev))]
+fung.L2 <- melt(fung.L2,id.vars = "Group.1")
+fung.L2<-cSplit(fung.L2, "Group.1", "_")
+names(fung.L2)<-c("Fungi","Relative_Abundance","Type","Compartment","Treat","Week")
+fung.L2$Fungi<-"Other"
+fung.bind<-rbind(fung.L1,fung.L2)
+fung.bind$Treat<-factor(fung.bind$Treat,levels=c("Control", "Preflowering", "Postflowering"))
+fung.bind$Compartment<-factor(fung.bind$Compartment,levels=c("Root", "Rhizosphere", "Soil"))
+fung.bind$Week <- gsub("TP", "",fung.bind$Week, fixed = TRUE)
+fung.bind$Week <- as.numeric(fung.bind$Week)
+
+fung.bind_1 <- subset(fung.bind, fung.bind$Type=="Metatranscriptome")
+fung.bind_1 <- subset(fung.bind_1, fung.bind_1$Compartment=="Root")
+
+ggplot(fung.bind_1, aes(x = factor(Week), y = Relative_Abundance, fill=Fungi)) +
+  geom_bar(stat='identity', position = "fill")+  
+  labs(x="Week",y = "Relative abundance")+
+  facet_grid(.~Treat)+scale_fill_manual(values=c(
+    "tomato","turquoise", "violet", "red", "yellowgreen",
+    "peachpuff", "peru", "pink", "plum2", "purple","wheat")) + theme_bw()+ theme(axis.title.x=element_blank(), strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "bottom")+guides(fill=guide_legend(title= "",byrow = T,nrow = 2,title.position = "left",title.hjust = 0.5))
+
+ggsave(paste0(kindom,"_kaiju_class_root_metatrans.pdf"),width = 8, height =4)
+  
+}
+
+barplot1("Fungi")
+
+#Fig 1b
+library(ggplot2)
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 1")
+pp1 <- read.csv("AMS_otu_trans_rel_content.csv",header = T,row.names = 1)
+pp <- pp1[,c(3,4)]
+
+ggplot(pp,aes(Arbuscular_mycorrhizal_trans_RA,Arbuscular_mycorrhizal_OTU_RA))+geom_point(aes(), size = 1.5)+geom_smooth(se=FALSE,size=1, method="lm",aes(),col='red',alpha = 0.5) +ggpubr::stat_regline_equation(label.x = 0,label.y = 0.95, size=4.5,fontface='bold',col='red') + ylim(0,1)+xlim(0,1)+geom_abline(slope = 1,intercept = 0,linetype=2,size=1.5,colour='grey80')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,label.y = 0.87,col='red',size=4.5,fontface='bold')+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=12, face="bold"),
+                    legend.text = element_text(colour="black", size=12, face="bold"),
+                    axis.text=element_text(size=10,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = "bottom")+labs(x="AMF relative abundance RNA-seq",y="AMF relative abundance DNA amplion")
+
+#Supplementary Fig. 1
+a <- ggplot(data = pp1, aes(x = factor(Week),  y = 100*(Arbuscular_mycorrhizal_trans_RA))) +
+  geom_boxplot( aes(color=Treat), size = 1, alpha = 1)+
+  labs(x="Week",y="AM fungal reads / fungal reads (%)")+
+  theme_bw()+guides(color=guide_legend(title= "Treatment",byrow = T,nrow = 1,title.position = "left"))+
+  scale_color_manual(values=c("black","red","blue")) +
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),legend.position = c(0.75,0.80))
+
+
+library(ggplot2)
+pp <- read.csv("Fungal_reads.csv",header = T,row.names = 1)
+pp$Treatment <- factor(pp$Treatment, levels=c("Control", "Pre_flowering_drought", "Post_flowering_drought"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+pp$Week <- factor(pp$Week)
+b <- ggplot(data = pp, aes(x = factor(Week),  y = Fungal_percent)) +
+  geom_boxplot( aes(color=Treatment), size = 1, alpha = 1)+
+  labs(x="Week",y="Fungal reads / total reads (%)")+
+  theme_bw()+guides(color=guide_legend(title= "Treatment",byrow = T,nrow = 1,title.position = "left"))+
+  scale_color_manual(values=c("black","blue","red")) +
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),title=element_text(size=15,face="bold"),legend.position = c(0.25,0.8))
+
+c <- ggplot(data = pp, aes(x = factor(Week),  y = AMF_percent)) +
+  geom_boxplot( aes(color=Treatment), size = 1, alpha = 1)+
+  labs(x="Week",y="AM fungal reads / total reads (%)")+
+  theme_bw()+guides(color=guide_legend(title= "Treatment",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  scale_color_manual(values=c("black","blue","red")) +
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),title=element_text(size=15,face="bold"),legend.position = c(0.25,0.8))
+
+library(ggpubr)
+
+ggarrange(b, c,a, common.legend=TRUE,legend = "bottom",labels = c("a","b","c"),            
+          font.label = list(size = 14, face = "bold"),nrow =1)
+
+ggsave("Fungal_reads_percent3.2022.pdf",width = 12, height =4)
+
+
+#Fig 1c
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 1")
+library(vegan)
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- subset(zg, zg$Group_common=="1")
+zg <- subset(zg, zg$Compartment =="Root")
+zg$Week  <- gsub("TP", "",zg$Week, fixed = TRUE)
+zg$Week  <- as.numeric(zg$Week)
+ko_c <- as.data.frame(ko[row.names(ko)%in%row.names(zg),])
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+otu<- data.frame(t(otu))
+otu <- as.data.frame(otu[row.names(otu)%in%row.names(zg),])
+
+otu$sum <- rowSums(otu)
+otu_c <- subset(otu, sum >= 65)
+otu_c <- otu_c[,-c(66)]
+otu_c = as.data.frame(rrarefy(otu_c, min(rowSums(otu_c))))
+
+zg <- as.data.frame(zg[row.names(zg)%in%row.names(otu_c),])
+ko_c<- as.data.frame(ko_c[row.names(ko_c)%in%row.names(otu_c),])
+
+row.names(ko_c)==row.names(otu_c)
+row.names(ko_c)==row.names(zg)
+
+otu <- otu_c
+library(vegan)
+library(ggplot2)
+library(ape)
+library(tidyverse)
+
+otu_dist <- vegdist(decostand(otu,"hellinger"),method = 'bray')
+a_otu_dist_matrix<-as.matrix(otu_dist)
+ko_dist <-  vegdist(decostand(ko_c,"hellinger"),method = 'bray')
+a_express_dis_matrix<-as.matrix(ko_dist)
+
+mant <- mantel(a_otu_dist_matrix,a_express_dis_matrix,permutations = 999)
+mant_r <- round(mant$statistic,3)
+mant_p <- mant$signif
+mds.f <- as.data.frame(pcoa(otu_dist)$vectors)
+mds.e <- as.data.frame(pcoa(ko_dist)$vectors)
+
+pro <- procrustes(mds.f,mds.e, symmetric = TRUE)
+pro_test <- protest(mds.f,mds.e, permutations = 999)
+
+eigen <- sqrt(pro$svd$d)
+percent_var <- signif(eigen/sum(eigen), 4)*100
+
+beta_pro <- data.frame(pro$X)
+trans_pro <- data.frame(pro$Yrot)
+beta_pro$UserName <- rownames(beta_pro)
+beta_pro$type <- "OTU"
+trans_pro$UserName <- rownames(trans_pro)
+trans_pro$type <- "Transcript"
+
+colnames(trans_pro) <- colnames(beta_pro)
+pvalue = pro_test$signif
+M =round(pro_test$ss,3)
+plot <- rbind(beta_pro, trans_pro)
+
+zg$UserName <- row.names(zg)
+plot <- left_join(plot,zg,by='UserName')
+
+p1 <- ggplot(plot) +
+  geom_point(size = 3, aes(x = Axis.1, y = Axis.2, color=Week,shape=type))+labs(title = "Procrustes test: AM fungal transcripts v.s. OTUs") +
+  scale_shape_manual(values=c(1,19))+scale_color_distiller(palette = "Spectral")+
+  theme_classic() +
+  geom_line(aes(x= Axis.1, y=Axis.2, group=UserName), col = "darkgrey", alpha = 0.4)+theme_bw() +
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=10, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "bottom") +
+  guides(shape=guide_legend(title="Type",byrow = T,nrow = 2,title.position = "top",title.hjust = 0.5),color=guide_colorbar(title="Week",title.position = "top")) +
+  annotate("text", x = 0.043, y = 0.05, label = paste0("Protest: M2=",M,"  p<",pvalue,"\n","Mantel: R=",mant_r,"  p<",mant_p), size = 4) +
+  xlab(paste0("PCo1 (",percent_var[1],"%)")) +
+  ylab(paste0("PCo2 (",percent_var[2],"%)")) 
+
+library(ape)
+adonis_result_ko_c <- adonis(ko_c~zg$Week*zg$Treat*zg$Cultivar)
+adonis_result_ko_c$aov.tab
+
+ko_dismatix <- vegdist(decostand(ko_c,"hellinger"),"bray")
+ko.pc <- pcoa(ko_dismatix)
+pc1=round(ko.pc$values$Relative_eig[1], 3)*100
+pc2=round(ko.pc$values$Relative_eig[2], 3)*100
+pc.ko = as.data.frame(ko.pc$vectors)
+
+p2<-ggplot(pc.ko,aes(Axis.1,Axis.2)) + 
+  geom_point(aes(color=zg$Week,shape=zg$Treat),size=3)+labs(title = "PCo analysis of AM fungal transcripts")+
+  labs(x = sprintf("PCo1 (%.1f%%)", pc1), y = sprintf("PCo2 (%.1f%%)", pc2))+
+  scale_shape_manual(values=c(15,17,16))+scale_color_distiller(palette = "Spectral")+
+  guides(shape=guide_legend(title="Treatment",bycol = T,ncol = 3,title.position = "top",title.hjust = 0.5),color=guide_colorbar(title="Week",title.position = "top"))+theme_bw()+
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=10, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "bottom")+
+  annotate("text", x = 0.2, y = -0.2, label = paste0("Time: R2=0.188, p<0.001","\n","Treatment: R2=0.067, p<0.001","\n","Cultivar: R2=0.066, p<0.001"), size = 4)
+library(ggpubr)
+
+ggarrange(p2,p1, common.legend=TRUE,legend = "bottom")
+
+ggsave("Root_PCOA&procrustes3.2022.pdf",width = 12, height =4.5)
+
+#Supplementary Fig. 2
+OTU_dismatix <- vegdist(decostand(otu,"hellinger"),"bray")
+ko.pc <- pcoa(OTU_dismatix)
+pc1=round(ko.pc$values$Relative_eig[1], 3)*100
+pc2=round(ko.pc$values$Relative_eig[2], 3)*100
+pc.ko = as.data.frame(ko.pc$vectors)
+
+ggplot(pc.ko,aes(Axis.1,Axis.2)) + 
+  geom_point(aes(colour=zg$Week,shape=zg$Treat),size=3)+labs(title = "PCo analysis of AM fungal OTUs")+
+  labs(x = sprintf("PCo1 (%.1f%%)", pc1), y = sprintf("PCo2 (%.1f%%)", pc2))+
+  scale_shape_manual(values=c(15,17,16))+scale_color_distiller(palette = "Spectral")+
+  guides(shape=guide_legend(title="Treatment",bycol = T,ncol = 3,title.position = "top",title.hjust = 0.5),color=guide_colorbar(title="Week",title.position = "top"))+theme_bw()+
+  theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=10, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "bottom")+
+  annotate("text", x = 0.28, y = -0.365 , label = paste0("Time: R2=0.473, p<0.001","\n","Treatment: R2=0.074, p<0.001","\n","Cultivar: R2=0.004, p=0.278"), size = 4)
+
+row.names(otu)==row.names(zg)
+adonis_result_otu <- adonis(otu~zg$Week*zg$Treat*zg$Cultivar)
+adonis_result_otu$aov.tab
+
+ggsave("Pcoa_AMSotu_Root.2022.pdf",width = 9, height =6)
+
+
+#Supplementary Fig. 3 AMF OTU liner
+
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 1")
+zotu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg$Group_2 <- paste(zg$Group_1,"_",zg$Cultivar)
+library(reshape2)
+library(ggplot2)
+library(MASS)
+library(splitstackshape)
+library(tidyverse)
+library(ggsci)
+
+zotu <- data.frame(t(zotu))
+
+total<-apply(zotu, 1, sum); 
+fung.relabu<-data.frame(lapply(zotu, function(x) {  x / total  }) )
+fung.L<-fung.relabu
+
+env.L<-as.data.frame(zg[row.names(zg)%in%row.names(fung.L),])
+row.names(fung.L)==row.names(env.L)
+fung.L.lev<-aggregate(fung.L,by=list(env.L$Group_2) , mean)
+
+fung.L1 <- melt(fung.L.lev,id.vars = "Group.1")
+fung.L1<-cSplit(fung.L1, "Group.1", "_")
+names(fung.L1)<-c("Fungi","Relative_Abundance","Compartment","Treat","Week","Cultivar")
+fung.bind <- fung.L1
+
+fung.bind$Treat<-factor(fung.bind$Treat,levels=c("Control", "Preflowering", "Postflowering"))
+fung.bind$Compartment<-factor(fung.bind$Compartment,levels=c("Root", "Rhizosphere", "Soil"))
+fung.bind$Cultivar <-factor(fung.bind$Cultivar,levels=c("t430", "t642"))
+fung.bind$Week <- gsub("TP", "",fung.bind$Week, fixed = TRUE)
+fung.bind$Week <- as.numeric(fung.bind$Week)
+
+fung.bind <- subset(fung.bind, fung.bind$Compartment=="Root")
+fung.bind$genus <- fung.bind$Fungi
+fung.bind$genus<- gsub("OTU[0-9]+", "",fung.bind$genus)
+
+library(ggsci)
+ggplot(data = fung.bind, aes(x = Week,  y = Relative_Abundance*100,group=Fungi)) +
+  geom_point(aes(color=genus,shape=Treat,alpha = Cultivar), size = 3)+labs(x="Week",y="Relative abundance (%)")+
+  geom_smooth(se=FALSE,size=2, method="lm", aes(), alpha = 0.2,color="black")+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.y= 0,size=2,fontface='bold',color="black") +
+  facet_wrap(vars(Fungi), ncol = 8, scales = "free_y")+scale_color_nejm() +scale_shape_manual(values=c(15,16,17))+scale_alpha_manual(values=c(0.3,1))+
+theme_bw()+guides(color=guide_legend(title= "Genus",byrow = T,nrow = 1,title.position = "left",title.hjust = 0.5))+
+  guides(shape=guide_legend(title= "Treat",byrow = T,nrow = 1,title.position = "left",title.hjust = 0.5))+
+  guides(alpha=guide_legend(title= "Cultivar",byrow = T,nrow = 1,title.position = "left",title.hjust = 0.5))+
+  scale_y_continuous(labels = scales::label_comma(accuracy =0.01))+
+  theme(strip.text = element_text(size = 6,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=15, face="bold"),
+        legend.text = element_text(colour="black", size=15, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=12,face="bold"),legend.position = 'bottom')
+
+ggsave("AMF_OTU_all_liner.pdf",width = 12, height =12)
+
+#Supplementary Fig. 4 Krona
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 1")
+zotu <- read.csv("Glomeromycetes.csv",header = T,row.names = 1)
+zg <- read.csv("group.csv",header = T)
+library(reshape2)
+library(ggplot2)
+library(MASS)
+library(splitstackshape)
+library(tidyverse)
+
+zotu <- zotu[,-c(1)]
+zotu <- data.frame(t(zotu))
+
+total<-apply(zotu, 1, sum); 
+fung.relabu<-data.frame(lapply(zotu, function(x) {  x / total  }) )
+
+zg<-cSplit(zg, "Group", "_")
+zg <- subset(zg, zg$Group_1=="Metatranscriptome" & zg$Group_2=="Root")
+
+fung.relabu_q <- as.data.frame(fung.relabu[row.names(fung.relabu)%in%zg$ID,])
+
+fung.relabu_ave <- as.data.frame(apply(fung.relabu_q,2,mean))
+fung.relabu_ave$ID <- row.names(fung.relabu_ave)
+fung.relabu_ave<-cSplit(fung.relabu_ave, "ID", ".")
+write.csv(fung.relabu_ave,"AMFTrans_Krona.csv")
+
+zotu1 <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+zotu1 <- data.frame(t(zotu1))
+total1<-apply(zotu1, 1, sum); 
+fung.relabu_otu<-data.frame(lapply(zotu1, function(x) {  x / total1  }) )
+
+zg1 <- read.csv("Group_1.csv",header = T)
+zg1 <- subset(zg1, zg1$Compartment=="Root")
+fung.relabu_otu_q <- as.data.frame(fung.relabu_otu[row.names(fung.relabu_otu)%in%zg1$Name,])
+fung.relabu_otu_q_ave <- as.data.frame(apply(fung.relabu_otu_q,2,mean))
+fung.relabu_otu_q_ave$ID <- row.names(fung.relabu_otu_q_ave)
+write.csv(fung.relabu_otu_q_ave,"AMFOTU_Krona.csv")
+

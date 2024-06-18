@@ -1,0 +1,100 @@
+library(wesanderson)
+library(RColorBrewer)
+library(ggsci)
+library(vegan)
+library(ggtext)
+library(hrbrthemes)
+library(ggplot2)
+library(pheatmap)
+library(vegan)
+library(colorRamps)
+library(dplyr)
+
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig S12")
+gene <- read.csv("trade.csv",header = T)
+gene[,-c(1,2)]<-as.numeric(unlist(gene[,-c(1,2)]))
+gene <- gene[ rowSums(gene[,-c(1,2)])!=0, ]
+gene[c(1:728),c(3:200)]<-decostand(gene[c(1:728),c(3:200)],'standardize',1)
+data5 <- data.frame(aggregate(gene[,-c(1,2)],by=list(gene$Group) , sum))
+rownames(data5)<-data5$Group.1
+data5 <- data5[,-1]
+data5<-data.frame(t(data5))
+group_ave <- read.csv("Group_1.csv",header = T,row.names = 1)
+group_ave <- subset(group_ave, group_ave$Compartment=="Root")
+
+row.names(group_ave)==row.names(data5)
+
+data5 <- cbind(group_ave,data5)
+data5$Week <- gsub("TP","",as.character(data5$Week))
+data5$Week <- as.numeric(data5$Week)
+data5$group_week <- data5$Week
+
+data5$ID <- rownames(data5)
+otu_diversity <- read.csv("OTU_nri_alpha.csv",header = T)
+colnames(otu_diversity)[1] <- 'ID'
+otu_diversity$ID  <- gsub("_quant", "",otu_diversity$ID, fixed = TRUE)
+otu_diversity$ID  <- gsub("_unmaped", "",otu_diversity$ID, fixed = TRUE)
+data30 <- left_join(data5,otu_diversity,by='ID')
+data30 <- na.omit(data30)
+
+a <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Mating)) +
+  geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
+  labs(x="AM fungal OTU NRI",y="AM fungal putative mating gene expression")+
+  theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
+  theme(strip.text = element_text(size = 12,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=10,face="bold"),legend.position = c(0.22,0.88),legend.direction = 'horizontal')
+
+b <- ggplot(data = data30, aes(x = OTU_richness,  y = AMF_Mating)) +
+  geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
+  labs(x="AM fungal OTU richness",y="AM fungal putative mating gene expression")+
+  theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
+  theme(strip.text = element_text(size = 12,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=10,face="bold"),legend.position = c(0.22,0.88),legend.direction = 'horizontal')
+
+
+
+c <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Sporulation)) +
+  geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
+  labs(x="AM fungal OTU NRI",y="AM fungal putative sporulation gene expression")+
+  theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
+  theme(strip.text = element_text(size = 12,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=10,face="bold"),legend.position = c(0.22,0.88),legend.direction = 'horizontal')
+
+
+
+d <- ggplot(data = data30, aes(x = OTU_richness,  y = AMF_Sporulation)) +
+  geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
+  labs(x="AM fungal OTU richness",y="AM fungal putative sporulation gene expression")+
+  theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
+  theme(strip.text = element_text(size = 12,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=8, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=10,face="bold"),legend.position = c(0.22,0.88),legend.direction = 'horizontal')
+
+library(ggpubr)
+
+ggarrange(b,a,d,c,common.legend=TRUE,legend = "bottom",ncol = 2,nrow=2,labels = c("a","b","c","d"))
+
+ggsave("root_AMF_mating_richness4.pdf",width = 7, height =8)

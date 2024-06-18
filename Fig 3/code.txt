@@ -1,0 +1,68 @@
+library(wesanderson)
+library(RColorBrewer)
+library(ggsci)
+library(vegan)
+library(ggtext)
+library(hrbrthemes)
+library(ggplot2)
+library(pheatmap)
+library(vegan)
+library(colorRamps)
+library(dplyr)
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 3")
+gene <- read.csv("trade.csv",header = T)
+gene <- data.frame(t(gene))
+drought <- read.csv("Drought_Group_1.csv",header = T,row.names = 1)
+drought <- filter(drought, !drought$Drought=="#N/A")
+gene_d <- as.data.frame(gene[row.names(gene)%in%row.names(drought),])
+gene_c <- rbind(gene[c(1,2),],gene_d)
+
+data <- data.frame(t(gene_c))
+data[,-c(1,2)]<-as.numeric(unlist(data[,-c(1,2)]))
+data <- data[ rowSums(data[,-c(1,2)])!=0, ]
+data[,-c(1,2)]<-decostand(data[,-c(1,2)], 'standardize',1)
+
+data1 <- data.frame(aggregate(data[,-c(1,2)],by=list(data$Group) , sum))
+rownames(data1)<-data1$Group.1
+data1 <- data1[,-1]
+data1<-data.frame(t(data1))
+
+row.names(drought)==row.names(data1)
+data1 <- cbind(drought,data1)
+data1$Week <- gsub("TP","",as.character(data1$Week))
+data1$Week <- as.numeric(data1$Week)
+data1$group_week <- data1$Week
+
+data1$ID <- rownames(data1)
+gene_diversity <- read.csv("gene_diversty.csv",header = T)
+data2 <- left_join(data1,gene_diversity,by='ID')
+
+nri_alpha <- read.csv("OTU_nri_alpha.csv",header = T,row.names=1)
+
+colnames(nri_alpha)[4] <-c('otu_diversity')
+colnames(nri_alpha)[25] <-c('NRI')
+nri_alpha$ID <- rownames(nri_alpha)
+nri_alpha$ID <- gsub("_quant","",as.character(nri_alpha$ID))
+nri_alpha$ID <- gsub("_unmaped","",as.character(nri_alpha$ID))
+data3 <- left_join(data2,nri_alpha,by='ID')
+colnames(data3)[34] <-c('gene_diversity')
+data3 <-na.omit(data3)
+data3[,c(34,40,61)]<-decostand(data3[,c(34,40,61)], 'standardize',2)
+data3$Drought <- as.numeric(data3$Drought)
+data3$Sorg_protein_degrade
+library(lavaan) 
+library(semPlot)
+
+model<-'
+SWEET1~Week+Drought
+STR2b~Week+Drought+RAM2
+PDR1~Drought
+RAM2~Drought+FaTM
+FaTM~Drought+Week
+otu_diversity~SWEET1+STR2b+Drought+PDR1
+gene_diversity~otu_diversity+Week+Drought+SWEET1+FaTM
+'
+fit<-sem(model = model,data = data3,sample.nobs = 60)
+semPaths(fit,'std',layout = "tree2",sizeMan = 10,sizeLat = 10)
+fitMeasures(fit,c("chisq","df","pvalue","gfi","cfi","rmr","srmr","rmsea"))
+summary(fit, standardized = TRUE, fit.measures = TRUE, rsquare = TRUE)

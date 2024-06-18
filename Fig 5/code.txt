@@ -1,0 +1,129 @@
+#Fig 5a
+gene <- read.csv("trade.csv",header = T)
+group_ave <- read.csv("Group_1.csv",header = T,row.names = 1)
+groupc <- read.csv("group1.csv",header = T,row.names = 1)
+
+gene1 <- subset(gene, gene$Group=="AMF_cytoskeleton"|gene$Group=="Sorg_cytoskeleton")
+gene1_c <- gene1[,-c(1,2)]
+gene1_c <- as.data.frame(t(gene1_c))
+row.names(gene1_c)==row.names(group_ave)
+gene1_c <- cbind(group_ave$Group,gene1_c)
+colnames(gene1_c)[1] <- "Group"
+gene1_c_ave<-data.frame(aggregate(gene1_c[,-1],by=list(gene1_c$Group), mean))
+row.names(gene1_c_ave) <- gene1_c_ave$Group.1
+
+Data2 <- match(row.names(groupc),row.names(gene1_c_ave))
+gene1_c_ave <- gene1_c_ave[Data2,]
+
+gene1_c_ave <- gene1_c_ave[,-1]
+gene1_c_ave <- as.data.frame(t(gene1_c_ave))
+gene1_c_ave <- cbind(gene1[c(1,2)],gene1_c_ave)
+groupd <- data.frame(groupc[,-c(2)])
+row.names(groupd)=row.names(groupc)
+colnames(groupd) <- c("Treat")
+
+ann_colors = list(Treat=c(Control="#DDBC95",Preflowering="#B38867",Postflowering="#CDCDC0"),Function=c(AMF_cytoskeleton='maroon',	Sorg_cytoskeleton="#00A087"))
+coul <- brewer.pal(100,'YlOrBr')
+#coul <- colorRampPalette(c("#5bc0eb",'black',"#ECE700"))(100)
+
+gene1_c_ave_1 <- gene1_c_ave[,-c(1,2)]
+group_data <- data.frame(gene1_c_ave[,c(2)])
+row.names(group_data)=row.names(gene1_c_ave)
+colnames(group_data) <- c("Function")
+
+pheatmap(gene1_c_ave_1,scale="row", annotation_row = group_data,annotation_col = groupd,show_rownames=F,cluster_cols=F,cluster_rows=F,labels_col = groupc$Week,angle_col = 0,fontsize_col = 8,annotation_colors = ann_colors,border=FALSE,cellwidth = 12, cellheight = 1,color=coul,filename ="cytoskeleton_heatmap.pdf")
+
+#Fig 5b &5c &5d
+library(wesanderson)
+library(RColorBrewer)
+library(ggsci)
+library(vegan)
+library(ggtext)
+library(hrbrthemes)
+library(ggplot2)
+library(pheatmap)
+library(vegan)
+library(colorRamps)
+library(dplyr)
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 5")
+gene <- read.csv("trade.csv",header = T)
+gene <- data.frame(t(gene))
+group_ave <- read.csv("Group_1.csv",header = T,row.names = 1)
+group_ave <- subset(group_ave, group_ave$Compartment=="Root")
+gene_c <- as.data.frame(gene[row.names(gene[-c(1,2),])%in%row.names(group_ave),])
+
+data <- data.frame(t(gene_c))
+data[,-c(1,2)]<-as.numeric(unlist(data[,-c(1,2)]))
+data[,-c(1,2)]<-decostand(data[,-c(1,2)], 'standardize',1)
+data1 <- data.frame(aggregate(data[,-c(1,2)],by=list(data$Group) , sum))
+rownames(data1)<-data1$Group.1
+data1 <- data1[,-1]
+data1<-data.frame(t(data1))
+
+row.names(group_ave)==row.names(data1)
+data1 <- cbind(group_ave,data1)
+data1$Week <- gsub("TP","",as.character(data1$Week))
+data1$Week <- as.numeric(data1$Week)
+data1$group_week <- data1$Week
+
+f = function(x) ifelse(x < 5, "A", ifelse(x>7,"C","B"))
+data1$group_week <- f(data1$group_week)
+data1$group_week <-as.character(data1$group_week)
+
+data1$Treat <- factor(data1$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+data1$Week <- as.numeric(data1$Week)
+data1$Cultivar <- factor(data1$Cultivar, levels = c("t430", "t642"))
+data1 <- na.omit(data1)
+
+a <- ggplot(data1,aes(AMF_cytoskeleton,Sorg_cytoskeleton))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+
+  scale_color_distiller(palette = "Spectral")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  geom_smooth(data = subset(data1, data1$group_week == "A"),se=FALSE,size=0.5,method="loess", alpha= 0.2,col='blue')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(data = subset(data1, data1$group_week == "A"),aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 35,label.y = 155,size=4,fontface='bold',col='blue') +
+  geom_smooth(data = subset(data1, data1$group_week == "C"),se=FALSE,size=0.5,col='red',method="loess", alpha= 0.2)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(data = subset(data1, data1$group_week == "C"),aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 35,label.y = 140,size=4,fontface='bold',col='red') +
+  labs(x="AM fungal cytoskeleton gene expression",y = "Sorghum cytoskeleton gene expression")+
+  guides(color=guide_colorbar(title.position = "top"),linetype=guide_legend(title="Treatment",byrow = T,nrow = 1,title.position = "top"),shape=guide_legend(title="Treat",byrow = T,nrow = 1,title.position = "top"),alpha=guide_legend(title="Cultivar",byrow = T,nrow = 1,title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=10, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=10,face="bold"),
+                    axis.title=element_text(size=10,face="bold"),legend.position = c(0.75,0.88),legend.direction = 'horizontal')
+
+data1$ID <- rownames(data1)
+gene_diversity <- read.csv("gene_diversty.csv",header = T)
+data2 <- left_join(data1,gene_diversity,by='ID')
+
+b <- ggplot(data2,aes(AMF_cytoskeleton,AMF_Mating))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+
+  scale_color_distiller(palette = "Spectral")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  geom_smooth(se=FALSE,size=0.5, method="lm",, alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = -28,label.y = 27,size=4,fontface='bold')+
+  labs(x="AM fungal cytoskeleton gene expression",y = "AM fungal putative mating gene expression")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=10, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=10,face="bold"),legend.position = c(0.25,0.89),legend.direction = 'horizontal')
+
+
+c <- ggplot(data2,aes(AMF_cytoskeleton,AMF_Sporulation))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+
+  scale_color_distiller(palette = "Spectral")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  geom_smooth(se=FALSE,size=0.5, method="lm",, alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = -28.5,label.y =58,size=4,fontface='bold')+
+  labs(x="AM fungal cytoskeleton gene expression",y = "AM fungal putative sporulation gene expression")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=10, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=10,face="bold"),legend.position = c(0.25,0.89),legend.direction = 'horizontal')
+
+library(ggpubr)
+
+ggarrange(a,c,b,common.legend=TRUE,legend = "bottom",ncol = 3)
+
+
+ggsave("root_AMF_cytoskeleton3.pdf",width = 12, height =4)

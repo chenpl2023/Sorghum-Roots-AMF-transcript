@@ -1,0 +1,500 @@
+Fig 2a
+
+data <- read.csv("ko_ave.csv",header = T,row.names = 1)
+groupc <- read.csv("group1.csv",header = T,row.names = 1)
+data1 <- data.frame(t(data))
+data2 <- match(row.names(groupc),row.names(data1))
+data3 <- data1[data2,]
+data4 <- data.frame(t(data3))
+row.names(data3)==row.names(groupc)
+
+groupd <- groupc[,-c(3)]
+library(pheatmap)
+
+ann_colors = list(Compartment =c(Root="#EB8F90",Rhizosphere="#ADBED2",Soil="#12406A"),Treat=c(Control="#DDBC95",Preflowering="#B38867",Postflowering="#CDCDC0"))
+coul <- colorRampPalette(c("#5bc0eb",'black',"#ECE700"))(100)
+
+pheatmap(data4,scale="row", annotation_col = groupd,show_rownames=F,cluster_cols=F,cluster_rows=F,labels_col = groupc$Week,angle_col = 0,fontsize_col = 8,annotation_colors = ann_colors,border=FALSE,cellwidth = 10, cellheight = 0.12,color=coul,filename ="AMSTrans_ko_all_heatmap.pdf")
+
+data <- read.csv("ko_ave.csv",header = T,row.names = 1)
+groupc <- read.csv("group1.csv",header = T,row.names = 1)
+groupc <- subset(groupc, groupc$Compartment=="Root")
+data1 <- data.frame(t(data))
+data2 <- match(row.names(groupc),row.names(data1))
+data3 <- data1[data2,]
+data4 <- data.frame(t(data3))
+row.names(data3)==row.names(groupc)
+data4 <- data4[which(rowSums(data4)>0),]
+groupd <- data.frame(groupc[,-c(1,3)])
+row.names(groupd)<-row.names(groupc)
+colnames(groupd)[1]<-'Treat'
+library(pheatmap)
+
+ann_colors = list(Treat=c(Control="#DDBC95",Preflowering="#B38867",Postflowering="#CDCDC0"))
+#coul <- colorRampPalette(c("#5bc0eb",'black',"#ECE700"))(100)
+coul <- brewer.pal(100,'YlOrBr')
+
+pheatmap(data4,scale="row", annotation_col = groupd,show_rownames=F,cluster_cols=F,cluster_rows=F,labels_col = groupc$Week,angle_col = 0,fontsize_col = 8,annotation_colors = ann_colors,border=FALSE,cellwidth = 10, cellheight = 0.04,color=coul,filename ="AMSTrans_ko_root_heatmap2.pdf")
+
+#Fig 2b
+library(reshape2)
+library(ggplot2)
+library(MASS)
+library(splitstackshape)
+library(tidyverse)
+library(ggsci)
+setwd("E:/陈沛霖-病原菌/宏转录/AMS/Trans/KO")
+ko <- read.csv("KO.csv",header = T,row.names = 1)
+ko <- data.frame(t(ko))
+
+total<-apply(ko, 1, sum); 
+fung.relabu<-data.frame(lapply(ko, function(x) {  x / total  }) )
+fung.L<-fung.relabu
+fung.L <- fung.L[,order(-colSums(fung.L))]
+
+zg <- read.csv("group_all.csv",header = T,row.names = 1)
+
+env.L<-zg
+row.names(fung.L)==row.names(env.L)
+fung.L.lev<-aggregate(fung.L,by=list(env.L$Group_1), mean)
+fung.L1<-fung.L.lev[,c(1,2:21)]
+fung.L1 <- melt(fung.L1,id.vars = "Group.1")
+fung.L1<-cSplit(fung.L1, "Group.1", "_")
+names(fung.L1)<-c("KO","Relative_Abundance","Compartment","Treat","Week")
+
+fung.L2<-fung.L.lev[,c(1,22:ncol(fung.L.lev))]
+fung.L2 <- melt(fung.L2,id.vars = "Group.1")
+fung.L2<-cSplit(fung.L2, "Group.1", "_")
+names(fung.L2)<-c("KO","Relative_Abundance","Compartment","Treat","Week")
+fung.L2$KO<-"Other"
+
+fung.bind<-rbind(fung.L1,fung.L2)
+fung.bind$Treat<-factor(fung.bind$Treat,levels=c("Control", "Preflowering", "Postflowering"))
+fung.bind$Compartment<-factor(fung.bind$Compartment,levels=c("Root", "Rhizosphere", "Soil"))
+
+write.csv(fung.bind,"ko_relabundance.csv")
+
+ggplot(fung.bind, aes(x = factor(Week), y = Relative_Abundance, fill=KO)) +
+  geom_bar(stat='identity', position = "fill")+  
+  labs(x="",y = "Relative abundance")+
+  facet_grid(Compartment~Treat)+scale_fill_manual(values=c(
+    "slateblue1","springgreen","steelblue1","tan1","thistle1","tomato","turquoise", "violet", "red", "yellowgreen",
+    "peachpuff", "peru", "pink", "plum2", "purple","wheat", "cornsilk3","cornsilk","coral4","coral",
+    "firebrick","chocolate","black","chartreuse4","chartreuse","burlywood4","burlywood","brown4","blue","bisque4","bisque",
+    "azure4","azure","aquamarine4","aquamarine","antiquewhite4","antiquewhite","aliceblue","dodgerblue4","dimgrey",
+    "deepskyblue4", "deepskyblue", "deeppink4","darkviolet", "darkslategray4","darkslategray",
+    "darkseagreen4", "darkseagreen", "darksalmon", "darkred", "darkorchid4", "darkorchid", "darkorange4",
+    "darkorange","darkgreen", "darkgoldenrod4","grey", "darkgoldenrod", "darkcyan")) + theme_bw()+ theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5),strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"))+guides(fill=guide_legend(title= "KO",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))
+
+
+ggsave("TOP20_All_ko.pdf",width = 10, height =6)
+
+fung.bind_root <- subset(fung.bind, fung.bind$Compartment=="Root")
+labels <- c(Control="Control",Preflowering="Preflowering drought",Postflowering="Postflowering drought")
+fung.bind_root$Week <-  gsub("TP","",as.character(fung.bind_root$Week))
+fung.bind_root$Week<-as.numeric(fung.bind_root$Week)
+
+ggplot(fung.bind_root, aes(x = factor(Week), y = Relative_Abundance, fill=KO)) +
+  geom_bar(stat='identity', position = "fill")+  
+  labs(x = NULL,y = "Relative abundance")+
+  facet_grid(.~Treat,labeller = labeller(Treat=labels))+scale_fill_manual(values=c(
+    "slateblue1","firebrick","steelblue1","tan1","thistle1","tomato","turquoise", "violet", "red", "yellowgreen",
+    "peachpuff", "peru", "pink", "plum2", "purple","wheat", "cornsilk3","cornsilk","coral4","coral",
+    "grey","chocolate","black","chartreuse4","chartreuse","burlywood4","burlywood","brown4","blue","bisque4","bisque",
+    "azure4","azure","aquamarine4","aquamarine","antiquewhite4","antiquewhite","aliceblue","dodgerblue4","dimgrey",
+    "deepskyblue4", "deepskyblue", "deeppink4","darkviolet", "darkslategray4","darkslategray",
+    "darkseagreen4", "darkseagreen", "darksalmon", "darkred", "darkorchid4", "darkorchid", "darkorange4",
+    "darkorange","darkgreen", "darkgoldenrod4","grey", "darkgoldenrod", "darkcyan")) + theme_bw()+ theme(strip.text = element_text(size = 15,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=10,face="bold"),
+        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "right")+guides(fill=guide_legend(title= "KO",bycol = T,ncol = 2,title.position = "top",title.hjust = 0.5))
+
+
+ggsave("TOP20_root_ko_1.pdf",width = 10, height =3)
+
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2")
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- subset(zg, zg$Group_common=="1")
+zg <- subset(zg, zg$Compartment=="Root")
+ko_c <- as.data.frame(ko[row.names(ko)%in%row.names(zg),])
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+
+alpha_diversity <- function(x, tree = NULL) {
+  observed_KO <- rowSums(x>0)
+  Shannon_KO <- diversity(x, index = 'shannon',base = 2)
+  Simpson_KO <- diversity(x, index = 'simpson')    #注意，这里是Gini-Simpson 指数
+  #保留四位小数
+  Shannon_KO <- sprintf("%0.4f", Shannon_KO)
+  Simpson_KO <- sprintf("%0.4f", Simpson_KO)
+  result <- data.frame(observed_KO,Shannon_KO, Simpson_KO)
+  result
+}
+
+library(vegan)
+library(ggplot2)
+alpha <- alpha_diversity (ko_c)
+
+row.names(alpha)==row.names(zg)
+zg$Treat <- factor(zg$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+zg$Week <- factor(zg$Week)
+zg$Week <- gsub("TP","",as.character(zg$Week))
+zg$Week <- as.numeric(zg$Week)
+zg$Cultivar <- factor(zg$Cultivar, levels = c("t430", "t642"))
+row.names(alpha)==row.names(zg)
+alpha_ko <- cbind(alpha,zg)
+
+library(MuMIn)
+library(nlme) 
+
+lme_pre_root<-lme(observed_KO~Week*Treat*Cultivar,random=~1|plot,data=alpha_ko)
+summary(lme_pre_root)
+anova(lme_pre_root)
+
+a <- ggplot(data = alpha_ko, aes(x = Week,  y = observed_KO)) +
+  geom_point( aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+scale_color_distiller(palette = "Spectral")+
+  labs(x="Week",y="AM fungal gene richness")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  geom_smooth(se=FALSE,size=0.5, method="loess", aes(linetype=Treat), color='grey',alpha = 0.8)+scale_linetype_manual(values=c("solid","twodash", "dotted"))+
+  theme_bw()+guides(color=guide_colorbar(title.position = "top"),linetype=guide_legend(title="Treatment",byrow = T,nrow = 1,title.position = "top"),shape=guide_legend(title="Treat",byrow = T,nrow = 1,title.position = "top"),alpha=guide_legend(title="Cultivar",byrow = T,nrow = 1,title.position = "top"))+
+  theme(strip.text = element_text(size = 12,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.65),legend.direction = 'horizontal')+ 
+  annotate("text", x = 7.3, y = 17700, label = paste0("Week: F= 227.0798  p<0.0001\n","Treatment: F= 68.0120  p<0.0001\n","Cultivar: F= 3.7773  p=0.0758\n"), size = 4) 
+
+library(reshape2)
+library(ggplot2)
+library(MASS)
+library(splitstackshape)
+library(tidyverse)
+library(ggsci)
+library(vegan)
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- subset(zg, zg$Group_common=="1")
+zg <- subset(zg, zg$Compartment=="Root")
+ko_c <- as.data.frame(ko[row.names(ko)%in%row.names(zg),])
+
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+otu <- data.frame(t(otu))
+otu_c <- as.data.frame(otu[row.names(otu)%in%row.names(zg),])
+otu_c$sum <- rowSums(otu_c)
+otu_c <- subset(otu_c, sum >= 65)
+otu_c <- otu_c[,-c(66)]
+otu_c = as.data.frame(rrarefy(otu_c, min(rowSums(otu_c))))
+
+alpha_diversity <- function(x, tree = NULL) {
+  observed_KO <- rowSums(x>0)
+  Shannon_KO <- diversity(x, index = 'shannon',base = 2)
+  Simpson_KO <- diversity(x, index = 'simpson')    #注意，这里是Gini-Simpson 指数
+  #保留四位小数
+  Shannon_KO <- sprintf("%0.4f", Shannon_KO)
+  Simpson_KO <- sprintf("%0.4f", Simpson_KO)
+  result <- data.frame(observed_KO,Shannon_KO, Simpson_KO)
+  result
+}
+alpha_otu <- alpha_diversity (otu_c)
+alpha <- alpha_diversity (ko_c)
+
+zg <- as.data.frame(zg[row.names(zg)%in%row.names(alpha_otu),])
+row.names(alpha_otu)==row.names(zg)
+alpha_otu <- cbind(alpha_otu,zg)
+
+colnames(alpha_otu) <- c("OTU_richness","OTU_shannon","OTU_Simpson")
+colnames(alpha)<- c("KO_richness","KO_shannon","KO_Simpson")
+alpha <- as.data.frame(alpha[row.names(alpha)%in%row.names(alpha_otu),])
+
+row.names(alpha_otu)==row.names(alpha)
+alpha_all <- cbind(alpha,alpha_otu)
+colnames(alpha_all)[9] <- 'Week'
+colnames(alpha_all)[8] <- 'Treat'
+colnames(alpha_all)[15] <- 'Cultivar'
+alpha_all$Week <- gsub("TP","",as.character(alpha_all$Week))
+alpha_all$Week <- as.numeric(alpha_all$Week)
+alpha_all$Treat <- factor(alpha_all$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+
+
+
+library(picante)
+library(ape)
+library(RColorBrewer)
+library(colorRamps)
+#com <- otu_c
+#phylo=read.tree("AMF_tree.nwk")
+#pd(com,phylo,include.root=F)
+#prune_tree<-prune.sample(com,phylo)
+#phydist<-cophenetic(prune_tree)
+#mntd<-ses.mntd(com,phydist,null.model="taxa.labels",abundance.weighted=T, runs=999)
+#mpd<-ses.mpd(com,phydist,null.model="taxa.labels",abundance.weighted=T, runs=999)
+#row.names(mpd)==row.names(alpha_all)
+#nri_alpha <- cbind(alpha_all,mpd)
+#nri_alpha$mpd.obs.z.1 <- -(nri_alpha$mpd.obs.z)
+#write.csv(nri_alpha,"OTU_nri_alpha.csv")
+
+nri_alpha <- read.csv("OTU_nri_alpha.csv",header = T,row.names=1)
+
+colnames(nri_alpha)[9] <- 'Week'
+colnames(nri_alpha)[8] <- 'Treat'
+colnames(nri_alpha)[15] <- 'Cultivar'
+nri_alpha$Treat <- factor(nri_alpha$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+
+b <- ggplot(nri_alpha,aes(OTU_richness,KO_richness))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=0.5, method="lm", alpha= 0.8,col='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 3,size=4,fontface='bold',col='black',label.y = 20000)+
+  labs(x="AM fungal OTU richness",y = "AM fungal gene richness")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=10, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+
+c <- ggplot(nri_alpha,aes(mpd.obs.z.1,KO_richness))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+
+  scale_color_distiller(palette = "Spectral")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
+  geom_smooth(se=FALSE,size=0.5, method="lm", alpha= 0.8,col='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,label.y = 20000,size=4,fontface='bold',col='black')+
+  labs(x="AM fungal OTU NRI",y = "AM fungal gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=10, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+
+
+library(ggpubr)
+
+ggarrange(a,b,c,common.legend=TRUE,legend = "bottom",ncol = 3)
+
+ggsave("root_AMF_gene_OTU_richness3.pdf",width = 12, height =4)
+
+#Supplementary Fig. 8 - Supplementary Fig. 11
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2")
+library(dplyr)
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- subset(zg, zg$Group_common=="1")
+zg <- subset(zg, zg$Compartment=="Root")
+ko_c <- as.data.frame(ko[row.names(ko)%in%row.names(zg),])
+
+ko_c1 <- data.frame(t(ko_c))
+fungfun <- read.csv("ave_function1TPM.csv",header = T,row.names = 1)
+ko_c1$ID1 <- row.names(ko_c1)
+ko_c1$ID1 <- gsub("|", ".",ko_c1$ID1, fixed = TRUE)
+row.names(ko_c1) <- ko_c1$ID1
+ko_fun <- as.data.frame(ko_c1[row.names(ko_c1)%in%row.names(fungfun),])
+fungfun$ID1 <- row.names(fungfun)
+ko_fun <- left_join(ko_fun,fungfun[,c(2,67)],by='ID1')
+ko_fun_ave <-aggregate(ko_fun[,c(1:196)],by=list(ko_fun$Group_1), sum)
+row.names(ko_fun_ave) <- ko_fun_ave$Group.1
+ko_fun_ave <- ko_fun_ave[,-1]
+ko_fun_ave <- data.frame(t(ko_fun_ave))
+ko_fun_ave$ID1 <- row.names(ko_fun_ave)
+ko_fun_ave$ID1 <- gsub("_.+", "",ko_fun_ave$ID1)
+
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+
+alpha_diversity <- function(x, tree = NULL) {
+  observed_KO <- rowSums(x>0)
+  Shannon_KO <- diversity(x, index = 'shannon',base = 2)
+  Simpson_KO <- diversity(x, index = 'simpson')    #注意，这里是Gini-Simpson 指数
+  #保留四位小数
+  Shannon_KO <- sprintf("%0.4f", Shannon_KO)
+  Simpson_KO <- sprintf("%0.4f", Simpson_KO)
+  result <- data.frame(observed_KO,Shannon_KO, Simpson_KO)
+  result
+}
+
+library(vegan)
+library(ggplot2)
+alpha <- alpha_diversity (ko_c)
+alpha$ID1 <- row.names(alpha)
+alpha$ID1   <- gsub("_quant", "",alpha$ID1, fixed = TRUE)
+alpha$ID1   <- gsub("_unmaped", "",alpha$ID1, fixed = TRUE)
+colnames(alpha)[1] <- 'AMF_gene_richness'
+AMF_abu <- read.csv("AMS_otu_trans_rel_content.csv",header = T)
+
+AMF_abu <- left_join(AMF_abu,alpha[,c(1,4)],by='ID1')
+
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+otu <- data.frame(t(otu))
+alpha_otu <- alpha_diversity (otu)
+alpha_otu$ID1 <- row.names(alpha_otu)
+alpha_otu$ID1   <- gsub("_quant", "",alpha_otu$ID1, fixed = TRUE)
+alpha_otu$ID1   <- gsub("_unmaped", "",alpha_otu$ID1, fixed = TRUE)
+colnames(alpha_otu)[1] <- 'AMF_OTU_richness'
+AMF_abu <- left_join(AMF_abu,alpha_otu[,c(1,4)],by='ID1')
+AMF_abu <- left_join(AMF_abu,ko_fun_ave,by='ID1')
+
+AMF_abu <- subset(AMF_abu, AMF_abu$Week >= 9 )
+
+AMF_abu_Block <-aggregate(AMF_abu[,c(5,11,13:22)],by=list(AMF_abu$Block), mean)
+
+Trait <- read.csv("Growth_trait.csv",header = T,row.names = 1)
+Trait <- Trait[,c(2,6,8,12)]
+Trait$Group.1 <- row.names(Trait)
+
+AMF_abu_trait_Block <- left_join(AMF_abu_Block,Trait,by='Group.1')
+
+AMF_abu_trait_Block1 <- AMF_abu_trait_Block[,-c(1)]
+library(psych)
+a <- corr.test(AMF_abu_trait_Block1, method = "spearman", adjust = "fdr")
+
+ad <- as.data.frame(a$r)
+ap <- as.data.frame(a$p)
+
+spman.r0 =a
+Cor<-as.matrix(spman.r0$r)
+P0<-as.matrix(spman.r0$p)
+library(reshape2)
+Cor <- melt(Cor)
+P0 <- melt(P0)
+
+df <- data.frame(Cor,  P0)
+
+df1 <- subset(df, df$value.1 > 0.01 )
+df2 <- subset(df, df$value.1 <= 0.01 )
+df1$value <- 0
+DF <- as.data.frame(rbind(df1,df2))
+DF <- DF[,-c(4:6)]
+DF <- dcast(DF, Var1 ~ Var2, value.var = "value")
+row.names(DF) <- DF$Var1
+DF <- DF[,-c(1,14:17)]
+DF <- DF[(13:16),]
+colnames(DF) <- c('AM fungal reads in RNA-seq%','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAPK expression','AM fungal Mating expression',  'AM fungal Pheromone expression','AM fungal PT expression','AM fungal Spore expression','AM fungal Sugar expression')
+
+DF <- t(DF)
+colnames(DF) <- c('Grain yield (lbs)','TWK (g)','Forage yield (lbs)','Height (m)')
+
+library(pheatmap)
+#pheatmap(DF,scale="none",cluster_cols=F,cluster_rows=F,angle_col = 315,fontsize_col = 12,fontsize_row = 12,cellwidth = 20, cellheight = 20,border='grey90', color = colorRampPalette(colors = c("white","blue","red"))(100),filename ="AMF_sorghum_trait_heatmap.pdf")
+
+AMF_abu_trait_Block$plot <- AMF_abu_trait_Block$Group.1
+AMF_abu_trait_Block$plot   <- gsub("Block ", "",AMF_abu_trait_Block$plot, fixed = TRUE)
+AMF_abu_trait_Block$plot <- as.numeric(AMF_abu_trait_Block$plot)
+zg1 <- zg[,c(10,2)]
+zg1 <- unique(zg1)
+AMF_abu_trait_Block_cor <- left_join(AMF_abu_trait_Block,zg1,by='plot')
+
+AMF_abu_trait_Block_cor1 <- AMF_abu_trait_Block_cor[,c(2:7,9,12,16,19)]
+colnames(AMF_abu_trait_Block_cor1) <- c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression','Forage_yeild_lbs','Treat')
+
+library(tidyverse)
+AMF_abu_trait_Block_cor1 <- gather(AMF_abu_trait_Block_cor1,key = "AMF_type",
+                                   value = "AMF_content",
+                                   1:8)
+
+AMF_abu_trait_Block_cor1$Treat <- factor(AMF_abu_trait_Block_cor1$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+AMF_abu_trait_Block_cor1$AMF_type <- factor(AMF_abu_trait_Block_cor1$AMF_type, 
+                                            levels=c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AMT expression','AM fungal AQPF expression','AM fungal AAT expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression'))
+
+p <- ggplot(AMF_abu_trait_Block_cor1,aes(as.numeric(AMF_content),as.numeric(Forage_yeild_lbs)))+
+  geom_point(aes(color=Treat), size = 5, alpha= 0.7)+geom_smooth(se=FALSE,size=0.5, method="lm",aes(),color='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.y = 235,size=6,fontface='bold') +
+  labs(x="AMF index",y = "Yield of sorghum forage (lbs)")+   scale_color_manual(values=c("black","blue","red")) +
+  theme_bw()+theme(strip.text = element_text(size = 12,face="bold"),
+                   panel.spacing = unit(0, "lines"),
+                   legend.title = element_text(colour="black", size=12, face="bold"),
+                   legend.text = element_text(colour="black", size=8, face="bold"),
+                   axis.text=element_text(size=8,face="bold"),
+                   axis.title=element_text(size=12,face="bold"),legend.position = c(0.66,0.08))
+
+p + facet_wrap(vars(AMF_type),nrow = 2,scales = "free_x")
+
+ggsave("forage_AMF_cor.pdf",width = 12, height =8)
+
+AMF_abu_trait_Block_cor2 <- AMF_abu_trait_Block_cor[,c(2:7,9,12,14,19)]
+colnames(AMF_abu_trait_Block_cor2) <- c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression','Grain_yeild_lbs','Treat')
+
+library(tidyverse)
+AMF_abu_trait_Block_cor2 <- gather(AMF_abu_trait_Block_cor2,key = "AMF_type",
+                                   value = "AMF_content",
+                                   1:8)
+
+AMF_abu_trait_Block_cor2$Treat <- factor(AMF_abu_trait_Block_cor2$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+AMF_abu_trait_Block_cor2$AMF_type <- factor(AMF_abu_trait_Block_cor2$AMF_type, 
+                                            levels=c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AMT expression','AM fungal AQPF expression','AM fungal AAT expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression'))
+
+p <- ggplot(AMF_abu_trait_Block_cor2,aes(as.numeric(AMF_content),as.numeric(Grain_yeild_lbs)))+
+  geom_point(aes(color=Treat), size = 5, alpha= 0.7)+geom_smooth(se=FALSE,size=0.5, method="lm",aes(),color='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.y = 27,size=6,fontface='bold') +
+  labs(x="AMF index",y = "Yield of sorghum grain (lbs)")+   scale_color_manual(values=c("black","blue","red")) +
+  theme_bw()+theme(strip.text = element_text(size = 12,face="bold"),
+                   panel.spacing = unit(0, "lines"),
+                   legend.title = element_text(colour="black", size=12, face="bold"),
+                   legend.text = element_text(colour="black", size=8, face="bold"),
+                   axis.text=element_text(size=8,face="bold"),
+                   axis.title=element_text(size=12,face="bold"),legend.position = c(0.66,0.08))
+
+p + facet_wrap(vars(AMF_type),nrow = 2,scales = "free_x")
+
+ggsave("grain_AMF_cor.pdf",width = 12, height =8)
+
+AMF_abu_trait_Block_cor3 <- AMF_abu_trait_Block_cor[,c(2:7,9,12,17,19)]
+colnames(AMF_abu_trait_Block_cor3) <- c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression','Sorghum_height','Treat')
+
+library(tidyverse)
+AMF_abu_trait_Block_cor3 <- gather(AMF_abu_trait_Block_cor3,key = "AMF_type",
+                                   value = "AMF_content",
+                                   1:8)
+
+AMF_abu_trait_Block_cor3$Treat <- factor(AMF_abu_trait_Block_cor3$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+AMF_abu_trait_Block_cor3$AMF_type <- factor(AMF_abu_trait_Block_cor3$AMF_type, 
+                                            levels=c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AMT expression','AM fungal AQPF expression','AM fungal AAT expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression'))
+
+p <- ggplot(AMF_abu_trait_Block_cor3,aes(as.numeric(AMF_content),as.numeric(Sorghum_height)))+
+  geom_point(aes(color=Treat), size = 5, alpha= 0.7)+geom_smooth(se=FALSE,size=0.5, method="lm",aes(),color='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.y = 135,size=6,fontface='bold') +
+  labs(x="AMF index",y = "Sorghum height (cm)")+   scale_color_manual(values=c("black","blue","red")) +
+  theme_bw()+theme(strip.text = element_text(size = 12,face="bold"),
+                   panel.spacing = unit(0, "lines"),
+                   legend.title = element_text(colour="black", size=12, face="bold"),
+                   legend.text = element_text(colour="black", size=8, face="bold"),
+                   axis.text=element_text(size=8,face="bold"),
+                   axis.title=element_text(size=12,face="bold"),legend.position = c(0.66,0.08))
+
+p + facet_wrap(vars(AMF_type),nrow = 2,scales = "free_x")
+
+ggsave("Sorghum_height_AMF_cor.pdf",width = 12, height =8)
+
+AMF_abu_trait_Block_cor4 <- AMF_abu_trait_Block_cor[,c(2:7,9,12,15,19)]
+colnames(AMF_abu_trait_Block_cor4) <- c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression','TWK','Treat')
+
+library(tidyverse)
+AMF_abu_trait_Block_cor4 <- gather(AMF_abu_trait_Block_cor4,key = "AMF_type",
+                                   value = "AMF_content",
+                                   1:8)
+
+AMF_abu_trait_Block_cor4$Treat <- factor(AMF_abu_trait_Block_cor4$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+AMF_abu_trait_Block_cor4$AMF_type <- factor(AMF_abu_trait_Block_cor4$AMF_type, 
+                                            levels=c('AM-fungi/All-fungi in RNA-seq','AM fungal gene richness','AM fungal AMT expression','AM fungal AQPF expression','AM fungal AAT expression','AM fungal FAT expression','AM fungal MAT expression','AM fungal SPS expression'))
+
+p <- ggplot(AMF_abu_trait_Block_cor4,aes(as.numeric(AMF_content),as.numeric(TWK)))+
+  geom_point(aes(color=Treat), size = 5, alpha= 0.7)+geom_smooth(se=FALSE,size=0.5, method="lm",aes(),color='grey') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.y = 39,size=6,fontface='bold') +
+  labs(x="AMF index",y = "Weight of 1000-sorghum seeds (g)")+   scale_color_manual(values=c("black","blue","red")) +
+  theme_bw()+theme(strip.text = element_text(size = 12,face="bold"),
+                   panel.spacing = unit(0, "lines"),
+                   legend.title = element_text(colour="black", size=12, face="bold"),
+                   legend.text = element_text(colour="black", size=8, face="bold"),
+                   axis.text=element_text(size=8,face="bold"),
+                   axis.title=element_text(size=12,face="bold"),legend.position = c(0.66,0.08))
+
+p + facet_wrap(vars(AMF_type),nrow = 2,scales = "free_x")
+
+ggsave("Sorghum_TWK_AMF_cor.pdf",width = 12, height =8)
+

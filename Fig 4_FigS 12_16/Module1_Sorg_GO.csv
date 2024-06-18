@@ -1,0 +1,45 @@
+GO term,Ontology,Description,Number of genes,input ,Number in BG/Ref,Ref,Richfactor,p-value,FDR
+GO:0055085,P,transmembrane transport,33,298,665,15420,2.567795327,1.30E-06,0.00054
+GO:0016310,P,phosphorylation,46,298,1299,15420,1.832385263,6.20E-05,0.0052
+GO:0006468,P,protein phosphorylation,44,298,1217,15420,1.870812263,5.80E-05,0.0052
+GO:0006796,P,phosphate-containing compound metabolic process,53,298,1574,15420,1.742365452,5.90E-05,0.0052
+GO:0006793,P,phosphorus metabolic process,53,298,1576,15420,1.740154328,6.10E-05,0.0052
+GO:0036211,P,protein modification process,52,298,1589,15420,1.693353213,0.00014,0.0084
+GO:0006464,P,cellular protein modification process,52,298,1589,15420,1.693353213,0.00014,0.0084
+GO:0043412,P,macromolecule modification,52,298,1629,15420,1.651773023,0.00026,0.013
+GO:0010468,P,regulation of gene expression,35,298,1040,15420,1.74141714,0.0012,0.039
+GO:1903506,P,regulation of nucleic acid-templated transcription,34,298,997,15420,1.764622727,0.0012,0.039
+GO:2001141,P,regulation of RNA biosynthetic process,34,298,997,15420,1.764622727,0.0012,0.039
+GO:0051252,P,regulation of RNA metabolic process,34,298,998,15420,1.762854568,0.0012,0.039
+GO:0006355,P,"regulation of transcription, DNA-templated",34,298,997,15420,1.764622727,0.0012,0.039
+GO:0031326,P,regulation of cellular biosynthetic process,34,298,1025,15420,1.716418399,0.0018,0.039
+GO:2000112,P,regulation of cellular macromolecule biosynthetic process,34,298,1025,15420,1.716418399,0.0018,0.039
+GO:0060255,P,regulation of macromolecule metabolic process,35,298,1063,15420,1.703738312,0.0017,0.039
+GO:0019219,P,regulation of nucleobase-containing compound metabolic process,34,298,1011,15420,1.740186804,0.0014,0.039
+GO:0009889,P,regulation of biosynthetic process,34,298,1025,15420,1.716418399,0.0018,0.039
+GO:0010556,P,regulation of macromolecule biosynthetic process,34,298,1025,15420,1.716418399,0.0018,0.039
+GO:0019222,P,regulation of metabolic process,35,298,1069,15420,1.694175702,0.0019,0.04
+GO:0051171,P,regulation of nitrogen compound metabolic process,34,298,1034,15420,1.701478587,0.0021,0.041
+GO:0031323,P,regulation of cellular metabolic process,34,298,1048,15420,1.678748911,0.0026,0.044
+GO:0080090,P,regulation of primary metabolic process,34,298,1047,15420,1.680352301,0.0025,0.044
+GO:0006810,P,transport,40,298,1294,15420,1.599535284,0.0025,0.044
+GO:0042221,P,response to chemical,10,298,174,15420,2.973848646,0.0027,0.044
+GO:0051234,P,establishment of localization,40,298,1301,15420,1.590929022,0.0028,0.044
+GO:0051179,P,localization,40,298,1305,15420,1.586052611,0.0029,0.045
+GO:0022857,F,transmembrane transporter activity,29,298,544,15420,2.758463285,1.60E-06,0.00052
+GO:0005215,F,transporter activity,35,298,770,15420,2.352043929,4.00E-06,0.00067
+GO:0016301,F,kinase activity,49,298,1343,15420,1.887939952,1.60E-05,0.0018
+GO:0004672,F,protein kinase activity,44,298,1213,15420,1.87698147,5.40E-05,0.0045
+GO:0016772,F,"transferase activity, transferring phosphorus-containing groups",51,298,1533,15420,1.721456809,0.00011,0.0048
+GO:0001071,F,nucleic acid binding transcription factor activity,24,298,519,15420,2.392830818,0.00011,0.0048
+GO:0016773,F,"phosphotransferase activity, alcohol group as acceptor",46,298,1341,15420,1.77499512,0.00013,0.0048
+GO:0030246,F,carbohydrate binding,13,298,189,15420,3.559177586,0.00013,0.0048
+GO:0003700,F,"transcription factor activity, sequence-specific DNA binding",24,298,519,15420,2.392830818,0.00011,0.0048
+GO:0046873,F,metal ion transmembrane transporter activity,7,298,72,15420,5.030760626,0.00074,0.019
+GO:0005524,F,ATP binding,46,298,1442,15420,1.650671606,0.00062,0.019
+GO:0043565,F,sequence-specific DNA binding,15,298,287,15420,2.704440755,0.00067,0.019
+GO:0022891,F,substrate-specific transmembrane transporter activity,16,298,320,15420,2.587248322,0.00071,0.019
+GO:0032559,F,adenyl ribonucleotide binding,52,298,1741,15420,1.54551307,0.0012,0.027
+GO:0030554,F,adenyl nucleotide binding,52,298,1745,15420,1.541970347,0.0012,0.027
+GO:0022892,F,substrate-specific transporter activity,16,298,359,15420,2.306182348,0.0022,0.046
+GO:0016020,C,membrane,56,298,1847,15420,1.568878246,0.00051,0.021
