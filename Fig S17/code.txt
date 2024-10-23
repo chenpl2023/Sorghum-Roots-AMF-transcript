@@ -66,7 +66,7 @@ colnames(data26)[33] <-c('gene_diversity')
 ggplot(data = data26, aes(x = Week,  y = AMF_Mating)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2,size=4,fontface='bold',col='black',label.y = 21)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.x = 2,size=4,fontface='bold',col='black',label.y = 21)+
   labs(x="Week",y="AMF putative mating gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),
@@ -81,7 +81,7 @@ ggsave("Root_mating_week.2022.pdf",width = 4, height =4)
 ggplot(data = data26, aes(x = Week,  y = AMF_Sporulation)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2,size=4,fontface='bold',col='black',label.y = 43)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2, r.accuracy = 0.001,size=4,fontface='bold',col='black',label.y = 43)+
   labs(x="Week",y="AMF putative sporulation gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),

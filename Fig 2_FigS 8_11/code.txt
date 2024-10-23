@@ -43,7 +43,8 @@ library(MASS)
 library(splitstackshape)
 library(tidyverse)
 library(ggsci)
-setwd("E:/陈沛霖-病原菌/宏转录/AMS/Trans/KO")
+
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2_FigS 8_11")
 ko <- read.csv("KO.csv",header = T,row.names = 1)
 ko <- data.frame(t(ko))
 
@@ -74,26 +75,6 @@ fung.bind$Compartment<-factor(fung.bind$Compartment,levels=c("Root", "Rhizospher
 
 write.csv(fung.bind,"ko_relabundance.csv")
 
-ggplot(fung.bind, aes(x = factor(Week), y = Relative_Abundance, fill=KO)) +
-  geom_bar(stat='identity', position = "fill")+  
-  labs(x="",y = "Relative abundance")+
-  facet_grid(Compartment~Treat)+scale_fill_manual(values=c(
-    "slateblue1","springgreen","steelblue1","tan1","thistle1","tomato","turquoise", "violet", "red", "yellowgreen",
-    "peachpuff", "peru", "pink", "plum2", "purple","wheat", "cornsilk3","cornsilk","coral4","coral",
-    "firebrick","chocolate","black","chartreuse4","chartreuse","burlywood4","burlywood","brown4","blue","bisque4","bisque",
-    "azure4","azure","aquamarine4","aquamarine","antiquewhite4","antiquewhite","aliceblue","dodgerblue4","dimgrey",
-    "deepskyblue4", "deepskyblue", "deeppink4","darkviolet", "darkslategray4","darkslategray",
-    "darkseagreen4", "darkseagreen", "darksalmon", "darkred", "darkorchid4", "darkorchid", "darkorange4",
-    "darkorange","darkgreen", "darkgoldenrod4","grey", "darkgoldenrod", "darkcyan")) + theme_bw()+ theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5),strip.text = element_text(size = 15,face="bold"),
-        panel.spacing = unit(0, "lines"),
-        legend.title = element_text(colour="black", size=12, face="bold"),
-        legend.text = element_text(colour="black", size=8, face="bold"),
-        axis.text=element_text(size=10,face="bold"),
-        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"))+guides(fill=guide_legend(title= "KO",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))
-
-
-ggsave("TOP20_All_ko.pdf",width = 10, height =6)
-
 fung.bind_root <- subset(fung.bind, fung.bind$Compartment=="Root")
 labels <- c(Control="Control",Preflowering="Preflowering drought",Postflowering="Postflowering drought")
 fung.bind_root$Week <-  gsub("TP","",as.character(fung.bind_root$Week))
@@ -101,7 +82,7 @@ fung.bind_root$Week<-as.numeric(fung.bind_root$Week)
 
 ggplot(fung.bind_root, aes(x = factor(Week), y = Relative_Abundance, fill=KO)) +
   geom_bar(stat='identity', position = "fill")+  
-  labs(x = NULL,y = "Relative abundance")+
+  labs(x = "Week",y = "Relative abundance")+
   facet_grid(.~Treat,labeller = labeller(Treat=labels))+scale_fill_manual(values=c(
     "slateblue1","firebrick","steelblue1","tan1","thistle1","tomato","turquoise", "violet", "red", "yellowgreen",
     "peachpuff", "peru", "pink", "plum2", "purple","wheat", "cornsilk3","cornsilk","coral4","coral",
@@ -110,14 +91,15 @@ ggplot(fung.bind_root, aes(x = factor(Week), y = Relative_Abundance, fill=KO)) +
     "deepskyblue4", "deepskyblue", "deeppink4","darkviolet", "darkslategray4","darkslategray",
     "darkseagreen4", "darkseagreen", "darksalmon", "darkred", "darkorchid4", "darkorchid", "darkorange4",
     "darkorange","darkgreen", "darkgoldenrod4","grey", "darkgoldenrod", "darkcyan")) + theme_bw()+ theme(strip.text = element_text(size = 15,face="bold"),
-        panel.spacing = unit(0, "lines"),
-        legend.title = element_text(colour="black", size=10, face="bold"),
-        legend.text = element_text(colour="black", size=8, face="bold"),
-        axis.text=element_text(size=10,face="bold"),
-        axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "right")+guides(fill=guide_legend(title= "KO",bycol = T,ncol = 2,title.position = "top",title.hjust = 0.5))
+                                                                                                         panel.spacing = unit(0, "lines"),
+                                                                                                         legend.title = element_text(colour="black", size=10, face="bold"),
+                                                                                                         legend.text = element_text(colour="black", size=8, face="bold"),
+                                                                                                         axis.text=element_text(size=10,face="bold"),
+                                                                                                         axis.title=element_text(size=15,face="bold"),title=element_text(size=15,face="bold"),legend.position = "right")+guides(fill=guide_legend(title= "KO",bycol = T,ncol = 3,title.position = "top",title.hjust = 0.5))
 
 
-ggsave("TOP20_root_ko_1.pdf",width = 10, height =3)
+
+ggsave("TOP20_root_ko1.pdf",width = 12, height =2)
 
 setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2")
 ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
@@ -251,7 +233,7 @@ nri_alpha$Treat <- factor(nri_alpha$Treat, levels=c("Control", "Preflowering", "
 
 b <- ggplot(nri_alpha,aes(OTU_richness,KO_richness))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=0.5, method="lm", alpha= 0.8,col='grey') + 
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 3,size=4,fontface='bold',col='black',label.y = 20000)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")), r.accuracy = 0.001, label.x = 3,size=4,fontface='bold',col='black',label.y = 20000)+
   labs(x="AM fungal OTU richness",y = "AM fungal gene richness")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
   guides(color=guide_colorbar(title.position = "top"))+
   theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
@@ -264,7 +246,7 @@ b <- ggplot(nri_alpha,aes(OTU_richness,KO_richness))+geom_point(aes(color=Week,s
 c <- ggplot(nri_alpha,aes(mpd.obs.z.1,KO_richness))+geom_point(aes(color=Week,shape=Treat,alpha = Cultivar), size = 2)+
   scale_color_distiller(palette = "Spectral")+scale_alpha_manual(values=c(0.3,1))+scale_shape_manual(values=c(15,16,17))+
   geom_smooth(se=FALSE,size=0.5, method="lm", alpha= 0.8,col='grey') + 
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,label.y = 20000,size=4,fontface='bold',col='black')+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")), r.accuracy = 0.001,label.x = 0,label.y = 20000,size=4,fontface='bold',col='black')+
   labs(x="AM fungal OTU NRI",y = "AM fungal gene richness")+
   guides(color=guide_colorbar(title.position = "top"))+
   theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),

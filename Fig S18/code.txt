@@ -40,7 +40,7 @@ data30 <- na.omit(data30)
 a <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Mating)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
   labs(x="AM fungal OTU NRI",y="AM fungal putative mating gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),
@@ -53,7 +53,7 @@ a <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Mating)) +
 b <- ggplot(data = data30, aes(x = OTU_richness,  y = AMF_Mating)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.x = 0,size=6,fontface='bold',col='black',label.y = 21)+
   labs(x="AM fungal OTU richness",y="AM fungal putative mating gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),
@@ -68,7 +68,7 @@ b <- ggplot(data = data30, aes(x = OTU_richness,  y = AMF_Mating)) +
 c <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Sporulation)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
   labs(x="AM fungal OTU NRI",y="AM fungal putative sporulation gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),
@@ -83,7 +83,7 @@ c <- ggplot(data = data30, aes(x = mpd.obs.z.1,  y = AMF_Sporulation)) +
 d <- ggplot(data = data30, aes(x = OTU_richness,  y = AMF_Sporulation)) +
   geom_point( aes(color=Week), size = 2, alpha = 1)+scale_color_distiller(palette = "Spectral")+
   geom_smooth(se=FALSE,size=1, method="lm", aes(), alpha = 0.4,col='grey50')+
-  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.x = 0,size=6,fontface='bold',col='black',label.y = 45)+
   labs(x="AM fungal OTU richness",y="AM fungal putative sporulation gene expression")+
   theme_bw()+guides(color=guide_colorbar(title.position = "top"))+
   theme(strip.text = element_text(size = 12,face="bold"),
