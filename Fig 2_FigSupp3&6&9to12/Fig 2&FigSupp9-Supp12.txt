@@ -175,6 +175,8 @@ otu_c$sum <- rowSums(otu_c)
 otu_c <- subset(otu_c, sum >= 65)
 otu_c <- otu_c[,-c(66)]
 otu_c = as.data.frame(rrarefy(otu_c, min(rowSums(otu_c))))
+otu_c <- read.csv("rare_otu.csv",header = T,row.names = 1)
+
 
 alpha_diversity <- function(x, tree = NULL) {
   observed_KO <- rowSums(x>0)
@@ -263,7 +265,7 @@ ggarrange(a,b,c,common.legend=TRUE,legend = "bottom",ncol = 3)
 
 ggsave("root_AMF_gene_OTU_richness3.pdf",width = 12, height =4)
 
-#Supplementary Fig. 8 - Supplementary Fig. 11
+#Supplementary Fig. 9 - Supplementary Fig. 12
 setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2")
 library(dplyr)
 ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)

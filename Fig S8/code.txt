@@ -1,0 +1,218 @@
+library(wesanderson)
+library(RColorBrewer)
+library(ggsci)
+library(vegan)
+## 载入需要的程辑包：permute
+## 载入需要的程辑包：lattice
+## This is vegan 2.6-4
+library(ggtext)
+library(hrbrthemes)
+## NOTE: Either Arial Narrow or Roboto Condensed fonts are required to use these themes.
+##       Please use hrbrthemes::import_roboto_condensed() to install Roboto Condensed and
+##       if Arial Narrow is not on your system, please see https://bit.ly/arialnarrow
+library(ggplot2)
+library(pheatmap)
+library(vegan)
+library(colorRamps)
+library(dplyr)
+## 
+## 载入程辑包：'dplyr'
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+setwd("E:/陈沛霖-病原菌/宏转录/AMS/NET/Between_sorg_amf/pos&neg_0.7/Trade")
+gene <- read.csv("trade.csv",header = T)
+gene[,-c(1,2)]<-as.numeric(unlist(gene[,-c(1,2)]))
+gene <- gene[ rowSums(gene[,-c(1,2)])!=0, ]
+gene[c(1:728),c(3:200)]<-decostand(gene[c(1:728),c(3:200)],'standardize',1)
+data5 <- data.frame(aggregate(gene[,-c(1,2)],by=list(gene$Group) , sum))
+rownames(data5)<-data5$Group.1
+data5 <- data5[,-1]
+data5<-data.frame(t(data5))
+group_ave <- read.csv("Group_1.csv",header = T,row.names = 1)
+group_ave <- subset(group_ave, group_ave$Compartment=="Root")
+
+row.names(group_ave)==row.names(data5)
+
+data5 <- cbind(group_ave,data5)
+data5$Week <- gsub("TP","",as.character(data5$Week))
+data5$Week <- as.numeric(data5$Week)
+data5$group_week <- data5$Week
+
+data5$ID <- rownames(data5)
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+
+alpha_diversity <- function(x, tree = NULL) {
+  observed_KO <- rowSums(x>0)
+  Shannon_KO <- diversity(x, index = 'shannon',base = 2)
+  Simpson_KO <- diversity(x, index = 'simpson')    #注意，这里是Gini-Simpson 指数
+  #保留四位小数
+  Shannon_KO <- sprintf("%0.4f", Shannon_KO)
+  Simpson_KO <- sprintf("%0.4f", Simpson_KO)
+  result <- data.frame(observed_KO,Shannon_KO, Simpson_KO)
+  result
+}
+alpha <- alpha_diversity (ko)
+alpha$ID <- rownames(alpha)
+alpha$ID <- gsub("_quant","",as.character(alpha$ID))
+alpha$ID <- gsub("_unmaped","",as.character(alpha$ID))
+
+data26 <- left_join(data5,alpha,by='ID')
+colnames(data26)[33] <-c('gene_diversity')
+
+ggplot(data26,aes(Sorg_amino_acid_transporter,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = -15,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum AA transporter gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+ggsave("Root_AAT_AMF gene diversity.pdf",,width = 4, height =4)
+
+
+ggplot(data26,aes(SWEET1,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 6000,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum SWEET1 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.7,0.89),legend.direction = 'horizontal')
+
+ggsave("Root_SWEET1_AMF gene diversity.pdf",,width = 4, height =4)
+ 
+ggplot(data26,aes(STR2b,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum STR2b gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+ggsave("Root_STR2b_AMF gene diversity.pdf",,width = 4, height =4)
+ 
+ggplot(data26,aes(CCD8,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum CCD8 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+ggsave("Root_CCD8_AMF gene diversity.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(CCD7,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum CCD7 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+ggsave("Root_CCD7_AMF gene diversity.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(D27,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum D27 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+ggsave("Root_D27_AMF gene diversity.pdf",,width = 4, height =4)
+
+
+ggplot(data26,aes(P450,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 0,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum P450 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.22,0.89),legend.direction = 'horizontal')
+
+ggsave("Root_P450_AMF gene diversity.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(PDR1,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(mapping = aes(x = PDR1, y = gene_diversity, linetype = Treat),se=FALSE,,size=1, method="lm", alpha= 0.4,col='grey50')+
+  ggsci::scale_fill_nejm()+ggpubr::stat_cor(data = subset(data26, data26$Treat == "Control"),aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2500,label.y = 13200,size=3,fontface='bold') +
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(data = subset(data26, data26$Treat == "Preflowering"),aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2500,label.y = 10200,size=3,fontface='bold') +
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(data = subset(data26, data26$Treat == "Postflowering"),aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2500,label.y = 11700,size=3,fontface='bold') +
+  labs(x="Sorghum PDR1 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"),linetype=guide_legend(title= "Treatment",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.79,0.71),legend.direction = 'horizontal')
+
+ggsave("Root_PDR1_AMF gene diversity.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(PDR1,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,,size=1, method="lm", alpha= 0.4,col='grey50')+
+  ggsci::scale_fill_nejm()+ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 2500,label.y = 13200,size=3,fontface='bold') +
+  labs(x="Sorghum PDR1 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"),linetype=guide_legend(title= "Treatment",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.79,0.71),legend.direction = 'horizontal')
+
+ggsave("Root_PDR1_AMF gene diversity1.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(RAM2,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 150,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum RAM2 gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.75,0.89),legend.direction = 'horizontal')
+
+ggsave("Root_RAM2_AMF gene diversity.pdf",,width = 4, height =4)
+
+ggplot(data26,aes(FaTM,gene_diversity))+geom_point(aes(color=Week), size = 2)+scale_color_distiller(palette = "Spectral")+
+  geom_smooth(se=FALSE,size=1, method="lm", alpha= 0.4,col='grey50') + 
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),label.x = 170,size=4,fontface='bold',col='black',label.y = 16000)+
+  labs(x="Sorghum FaTM gene expression",y = "AMF gene richness")+
+  guides(color=guide_colorbar(title.position = "top"))+
+  theme_bw()+ theme(strip.text = element_text(size = 12,face="bold"),
+                    panel.spacing = unit(0, "lines"),
+                    legend.title = element_text(colour="black", size=8, face="bold"),
+                    legend.text = element_text(colour="black", size=8, face="bold"),
+                    axis.text=element_text(size=8,face="bold"),
+                    axis.title=element_text(size=12,face="bold"),legend.position = c(0.73,0.89),legend.direction = 'horizontal')
+
+ggsave("Root_FaTM_AMF gene diversity.pdf",,width = 4, height =4)

@@ -1,0 +1,258 @@
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2_FigS 8_11")
+data <- read.csv("rare_otu.csv",header = T,row.names = 1)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+library(dplyr)
+data$ID_OTU <- row.names(data)
+zg$ID_OTU <- row.names(zg)
+
+fungi_g_1 <- left_join(data,zg[,c(11,3)],by='ID_OTU')
+fungi_g_1$Week <- gsub("TP", "",fungi_g_1$Week, fixed = TRUE)
+fungi_g_1$Week  <- as.numeric(fungi_g_1$Week)
+
+x <- as.data.frame(fungi_g_1[,67])
+rownames(x) <- fungi_g_1$ID_OTU
+
+glades.taxa  <- fungi_g_1[,1:65]
+rownames(glades.taxa) <- fungi_g_1$ID_OTU
+glades.taxa[glades.taxa>0] = 1
+m <- as.data.frame(colSums(glades.taxa))
+m1 <- which(m$`colSums(glades.taxa)`<3)
+
+y  <- fungi_g_1[,1:65]
+rownames(y) <- fungi_g_1$ID_OTU
+y <- y[,-m1]
+
+library(TITAN2)
+
+#res = titan(x, 
+# y,
+# minSplt = 10,
+#  numPerm = 999,
+#  boot = TRUE,
+#    nBoot = 500,
+#    imax = FALSE,
+#      ivTot = FALSE,
+#     pur.cut = 0.95,
+#            rel.cut = 0.95,
+#            ncpus = 8,
+#            memory = FALSE)
+
+#dat <- as.data.frame(res$sppmax)
+#names(dat)[ncol(dat)] <- "Titan"
+#dat <- dat[which(dat$Titan>0),]
+#dat <- dat[order(dat$Titan,decreasing = FALSE),]
+#dat$order <- c(1:length(dat[,"zenv.cp"]))
+#dat$Titan[dat$Titan=="1"] = "z-"
+#dat$Titan[dat$Titan=="2"] = "z+"
+#dat$sample.id <- rownames(dat)
+
+#write.csv(dat,"titan.csv")
+
+dat <- read.csv("titan.csv",header = T,row.names = 1)
+
+
+library(ggtree)
+library(ggplot2)
+tree<-read.tree("bayes_tree_ted.nhx")
+reserve_tip <- rownames(dat) 
+to_drop<-tree$tip.label[-match(reserve_tip,tree$tip.label)]
+tree_reduced<-treeio::drop.tip(tree,to_drop)
+p1 <- ggtree(tree_reduced)+xlim(0,1)+geom_tiplab(size=3,offset=.005,fontface="bold")
+get_taxa_name(p1)
+
+dat <- dat[rev(get_taxa_name(p1)),]
+dat$ord <- c(1:length(dat[,"zenv.cp"]))
+
+otu_tax <- read.csv("OTU_taxa.csv",header = T,row.names = 1)
+otu_tax$sample.id <- row.names(otu_tax)
+dat <- left_join(dat,otu_tax[,c(6,8)],by='sample.id')
+
+#pal_nejm(palette = c("default"), alpha = 1)(8)
+
+data_ave <- data[,-66]
+data_ave <- data_ave/66
+data_ave <- as.data.frame(t(data_ave))
+data_ave$Mean <- rowMeans(data_ave)*100
+data_ave$sample.id <- row.names(data_ave)
+dat <- left_join(dat,data_ave[,c(151,150)],by='sample.id')
+
+library(ggpubr)
+p5 <- ggdotchart(dat, x = "ord", y = "Mean",
+                 color = "Genus", size = 2.5,
+                 add = "segment",sorting = "none",
+                 add.params = list(color = "lightgray", size = 1),   #修改线条参数
+                 position = position_dodge(0.3),                      #调整位置                                    #使用内部自带的调色板
+) + theme(axis.text.y=element_blank(),legend.position ="none",axis.text = element_text(size = 10, face = "bold"),
+          axis.title=element_text(size=12,face="bold")) +
+  scale_color_manual(values=c("#BC3C29FF","#20854EFF","#0072B5FF", "#7876B1FF"))+coord_flip()+labs(x = NULL, y="Relative abundance(%)")
+
+
+p2 <- ggplot( )+
+  geom_text(data=dat,aes(x=ord+0.5, y=zenv.cp+2,label = sample.id,color = Genus), size = 3)+
+  geom_pointrange(data=dat,aes(x=ord, y=zenv.cp, ymin=X5., ymax=X95.,shape = Titan,linetype=Titan,color = Genus), size=0.8)+
+  scale_shape_manual(values=c(19, 1)) + coord_flip() + ylab("Week") + xlab("OTUs") +scale_color_manual(values=c("#BC3C29FF","#20854EFF","#0072B5FF", "#7876B1FF"))+
+  scale_y_continuous(breaks=c(1,3,5,7,9,11,13,15,17))+ylim(0,17)+
+  theme(panel.background = element_rect(fill = NA)) + 
+  theme(strip.text = element_text(size = 15,face="bold"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text = element_text(size = 8, face = "bold"),
+        axis.title=element_text(size=12,face="bold"),
+        axis.line = element_line(linetype = "solid"),legend.position = "bottom",legend.box.just='left')
+
+nri_alpha <- read.csv("OTU_bayesnri_alpha.csv",header = T,row.names = 1)
+colnames(nri_alpha)[9] <- 'Week'
+colnames(nri_alpha)[8] <- 'Treat'
+colnames(nri_alpha)[15] <- 'Cultivar'
+nri_alpha$Treat <- factor(nri_alpha$Treat, levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Preflowering drought", "Postflowering drought"))
+nri_alpha1 <- nri_alpha[,c(4,25)]
+nri_alpha1$ID <- row.names(nri_alpha1)
+library(reshape2)
+nri_alpha1 <- melt(nri_alpha1,id='ID')
+nri_alpha$ID <- row.names(nri_alpha)
+nri_alpha1<- left_join(nri_alpha1,nri_alpha[,c(26,9)],by='ID')
+nri_alpha1$variable <- factor(nri_alpha1$variable, levels=c("OTU_richness", "mpd.obs.z.1"),labels=c("AM fungal OTU richness", "AM fungal OTU NRI"))
+
+p3a <- ggplot(data = nri_alpha, aes(x = Week,  y =OTU_richness)) +
+  geom_point( aes(), size = 2)+scale_color_distiller(palette = "Spectral")+
+  labs(y="AM fungal OTU richness",x=NULL)+
+  geom_smooth(se=FALSE,size=1, method="loess", aes(), color='grey',alpha = 0.8)+
+  theme(panel.background = element_rect(fill = NA)) + 
+  theme(strip.text = element_text(size = 10,face="bold"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text = element_text(size = 8, face = "bold"),
+        axis.title=element_text(size=12,face="bold"),
+        axis.line = element_line(linetype = "solid"))
+
+p3b <- ggplot(data = nri_alpha, aes(x = Week,  y =mpd.obs.z.1)) +
+  geom_point( aes(), size = 2)+scale_color_distiller(palette = "Spectral")+
+  labs(y="AM fungal OTU NRI",x="Week")+
+  geom_smooth(se=FALSE,size=1, method="loess", aes(), color='grey',alpha = 0.8)+
+  theme(panel.background = element_rect(fill = NA)) + 
+  theme(strip.text = element_text(size = 10,face="bold"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text = element_text(size = 8, face = "bold"),
+        axis.title=element_text(size=12,face="bold"),
+        axis.line = element_line(linetype = "solid"))
+
+
+
+otu <-read.csv("rare_otu.csv",header = T,row.names = 1)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- as.data.frame(zg[row.names(zg)%in%row.names(otu),])
+zg$Week  <- gsub("TP", "",zg$Week, fixed = TRUE)
+zg$Week  <- as.numeric(zg$Week)
+identical(row.names(zg),row.names(otu))
+
+library(vegan)
+library(ggplot2)
+library(ape)
+library(tidyverse)
+
+OTU_dismatix <- vegdist(decostand(otu,"hellinger"),"bray")
+ko.pc <- pcoa(OTU_dismatix)
+pc1=round(ko.pc$values$Relative_eig[1], 3)*100
+pc2=round(ko.pc$values$Relative_eig[2], 3)*100
+pc.ko = as.data.frame(ko.pc$vectors)
+identical(row.names(zg),row.names(pc.ko))
+
+library(psych)
+library(reshape2)
+library(ggrepel)
+r_result <- corr.test(otu,pc.ko[,c(1:2)],method="spearman",adjust="fdr", alpha=.05, ci=FALSE)
+r <- r_result$r 
+r <- as.data.frame(na.omit(r))
+r$line <- abs(r$Axis.1)+abs(r$Axis.2)
+r1 <- r[order(-r$line),]
+r1 <- r1[c(1:15),]
+r1$OUT_G <- row.names(r1)
+otu_tax <-read.csv("OTU_taxa.csv",header = T)
+r1 <- left_join(r1,otu_tax[,c(1,7)],by='OUT_G')
+row.names(r1) <- r1$OUT_G
+rg <- subset(r1, r1$Genus=="Dominikia")
+rr = subset(r1, r1$Genus=="Rhizoglomus")
+rc = subset(r1, r1$Genus=="Entrophospora")
+
+p6 <-ggplot(pc.ko,aes(Axis.1,Axis.2)) + 
+  geom_point(aes(colour=zg$Week,shape=zg$Treat),size=3)+
+  labs(x = sprintf("PCo1 (%.1f%%)", pc1), y = sprintf("PCo2 (%.1f%%)", pc2))+
+  scale_shape_manual(values=c(15,17,16))+scale_color_distiller(palette = "Spectral")+
+  geom_segment(data = r1,aes(x = 0,y = 0,xend = r1[,1]*0.5,yend = r1[,2]*0.5),arrow = arrow(angle = 40,length = unit(0.2,"cm")),size = 0.5) +
+  geom_text_repel(data = rg,aes(x = rg[,1]*0.5,y = rg[,2]*0.5,label = rownames(rg)), size=2.5,color = "#20854EFF",box.padding = unit(0.2,"lines"), segment.colour = "grey50")+
+  geom_text_repel(data = rr,aes(x = rr[,1]*0.5,y = rr[,2]*0.5,label = rownames(rr)), size=2.5,color = "#7876B1FF",box.padding = unit(0.2,"lines"), segment.colour = "grey50")+
+  geom_text_repel(data = rc,aes(x = rc[,1]*0.5,y = rc[,2]*0.5,label = rownames(rc)), size=2.5,color = "#BC3C29FF",box.padding = unit(0.2,"lines"), segment.colour = "grey50")+
+  guides(shape=guide_legend(title="Treatment",bycol = T,ncol = 3,title.position = "top",title.hjust = 0.5),color=guide_colorbar(title="Week",title.position = "top"))+theme_bw()+
+  theme(strip.text = element_text(size = 10,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=8, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),title=element_text(size=12,face="bold"),legend.position = "bottom")+
+  annotate("text", x = -0.37, y = 0.3, label = paste0("Time: R2 = 0.458, p < 0.001","\n","Treatment: R2 = 0.075, p < 0.001","\n","Cultivar: R2 = 0.006, p = 0.121"), size = 4)
+
+
+
+library(ggpubr)
+library(patchwork)
+
+
+p1+p2+p5+(p3a / p3b)+p6+plot_layout(widths = c(0.6,0.9,0.3,0.5,1.5))
+
+ggsave("Titan3.pdf",width = 15, height =6.2)
+
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2_FigS 8_11")
+otu <-read.csv("rare_otu.csv",header = T,row.names = 1)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- as.data.frame(zg[row.names(zg)%in%row.names(otu),])
+zg$Week  <- gsub("TP", "",zg$Week, fixed = TRUE)
+zg$Week  <- as.numeric(zg$Week)
+identical(row.names(zg),row.names(otu))
+otu <- otu/66
+
+titan <- read.csv("titan.csv",header = T,row.names = 1)
+otu <- data.frame(t(otu))
+otu <- as.data.frame(otu[row.names(otu)%in%row.names(titan),])
+otu$Group <- row.names(otu)
+library(reshape2)
+otu1 <- melt(otu,id.vars = "Group")
+names(otu1)<-c("Fungi","sample.id","Relative_Abundance")
+zg$sample.id <- row.names(zg)
+library(tidyverse)
+otu1 <- left_join(otu1,zg[,c(2,3,9,11)],by='sample.id')
+
+tax <- read.csv("OTU_taxa.csv",header = T,row.names = 1)
+tax$Fungi <- row.names(tax)
+otu1 <- left_join(otu1,tax[,c(1,6,8)],by='Fungi')
+
+otu1$Treat<-factor(otu1$Treat,levels=c("Control", "Preflowering", "Postflowering"),labels=c("Control", "Pre-flowering drought", "Post-flowering drought"))
+otu1$Cultivar <-factor(otu1$Cultivar,levels=c("t430", "t642"),labels=c("RTX430", "BTX642"))
+
+otu$mean <- rowMeans(otu[,1:149])
+otu22 <- otu[order(-otu$mean),]
+colnames(otu22)[150] <- 'Fungi'
+otu22 <- left_join(otu22,tax[,c(1,8)],by='Fungi')
+
+otu1$OTU <-  factor(otu1$OTU, levels = c(otu22$OTU))
+
+library(ggsci)
+ggplot(data = otu1, aes(x = Week,  y = Relative_Abundance*100,group=OTU)) +
+  geom_point(aes(color=Genus,shape=Treat,alpha = Cultivar), size = 3)+labs(x="Week",y="Relative abundance (%)")+
+  geom_smooth(se=FALSE,size=2, method="lm", aes(), alpha = 0.2,color="black")+
+  ggsci::scale_fill_nejm() + ggpubr::stat_cor(aes(label = paste(..r.label..,..p.label.., sep = "~`,`~")),r.accuracy = 0.001,label.y= 0,size=3.8,fontface='bold',color="black") +
+  facet_wrap(vars(OTU), nrow = 3, scales = "free_y")+scale_color_manual(values=c("#BC3C29FF","#20854EFF","#0072B5FF", "#7876B1FF"))+scale_shape_manual(values=c(15,16,17))+scale_alpha_manual(values=c(0.3,1))+
+  theme_bw()+guides(color=guide_legend(title= "Genus",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  guides(shape=guide_legend(title= "Treat",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  guides(alpha=guide_legend(title= "Cultivar",bycol = T,ncol = 1,title.position = "top",title.hjust = 0.5))+
+  scale_y_continuous(labels = scales::label_comma(accuracy =0.01))+
+  theme(strip.text = element_text(size = 10,face="bold"),
+        panel.spacing = unit(0, "lines"),
+        legend.title = element_text(colour="black", size=10, face="bold"),
+        legend.text = element_text(colour="black", size=10, face="bold"),
+        axis.text=element_text(size=8,face="bold"),
+        axis.title=element_text(size=12,face="bold"),title=element_text(size=12,face="bold"),legend.position = 'bottom')
+
+ggsave("otu_abun_titan.pdf",width = 15, height =6.5)
+
+

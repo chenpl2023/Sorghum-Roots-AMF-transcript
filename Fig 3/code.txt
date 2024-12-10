@@ -1,3 +1,4 @@
+
 library(wesanderson)
 library(RColorBrewer)
 library(ggsci)
@@ -37,7 +38,7 @@ data1$ID <- rownames(data1)
 gene_diversity <- read.csv("gene_diversty.csv",header = T)
 data2 <- left_join(data1,gene_diversity,by='ID')
 
-nri_alpha <- read.csv("OTU_nri_alpha.csv",header = T,row.names=1)
+nri_alpha <- read.csv("ted_OTU_nri_alpha.csv",header = T,row.names=1)
 
 colnames(nri_alpha)[4] <-c('otu_diversity')
 colnames(nri_alpha)[25] <-c('NRI')
@@ -52,6 +53,7 @@ data3$Drought <- as.numeric(data3$Drought)
 data3$Sorg_protein_degrade
 library(lavaan) 
 library(semPlot)
+colnames(data3)[3] <- 'Week'
 
 model<-'
 SWEET1~Week+Drought

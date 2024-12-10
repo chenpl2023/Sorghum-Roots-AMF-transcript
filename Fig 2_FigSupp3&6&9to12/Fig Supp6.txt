@@ -1,0 +1,127 @@
+setwd("E:/陈沛霖-病原菌/宏转录/MS/code/Fig 2_FigS 8_11")
+library(dplyr)
+ko <- read.csv("AMS_TPM.csv",header = T,row.names = 1)
+ko <- t(ko)
+zg <- read.csv("Group_1.csv",header = T,row.names = 1)
+zg <- subset(zg, zg$Group_common=="1")
+zg <- subset(zg, zg$Compartment=="Root")
+ko_c <- as.data.frame(ko[row.names(ko)%in%row.names(zg),])
+
+ko_c1 <- data.frame(t(ko_c))
+fungfun <- read.csv("ave_function1TPM.csv",header = T,row.names = 1)
+ko_c1$ID1 <- row.names(ko_c1)
+ko_c1$ID1 <- gsub("|", ".",ko_c1$ID1, fixed = TRUE)
+row.names(ko_c1) <- ko_c1$ID1
+ko_fun <- as.data.frame(ko_c1[row.names(ko_c1)%in%row.names(fungfun),])
+fungfun$ID1 <- row.names(fungfun)
+ko_fun <- left_join(ko_fun,fungfun[,c(2,67)],by='ID1')
+ko_fun_ave <-aggregate(ko_fun[,c(1:196)],by=list(ko_fun$Group_1), sum)
+row.names(ko_fun_ave) <- ko_fun_ave$Group.1
+ko_fun_ave <- ko_fun_ave[,-1]
+ko_fun_ave <- data.frame(t(ko_fun_ave))
+ko_fun_ave$ID1 <- row.names(ko_fun_ave)
+ko_fun_ave$ID1 <- gsub("_.+", "",ko_fun_ave$ID1)
+
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+
+alpha_diversity <- function(x, tree = NULL) {
+  observed_KO <- rowSums(x>0)
+  Shannon_KO <- diversity(x, index = 'shannon',base = 2)
+  Simpson_KO <- diversity(x, index = 'simpson')    #注意，这里是Gini-Simpson 指数
+  #保留四位小数
+  Shannon_KO <- sprintf("%0.4f", Shannon_KO)
+  Simpson_KO <- sprintf("%0.4f", Simpson_KO)
+  result <- data.frame(observed_KO,Shannon_KO, Simpson_KO)
+  result
+}
+
+library(vegan)
+library(ggplot2)
+alpha <- alpha_diversity (ko_c)
+alpha$ID1 <- row.names(alpha)
+alpha$ID1   <- gsub("_quant", "",alpha$ID1, fixed = TRUE)
+alpha$ID1   <- gsub("_unmaped", "",alpha$ID1, fixed = TRUE)
+colnames(alpha)[1] <- 'AMF_gene_richness'
+AMF_abu <- read.csv("AMS_otu_trans_rel_content.csv",header = T)
+
+AMF_abu <- left_join(AMF_abu,alpha[,c(1,4)],by='ID1')
+
+otu <- read.csv("BacteriaFungi2019.07.10.csv",header = T,row.names = 1)
+otu <- data.frame(t(otu))
+alpha_otu <- alpha_diversity (otu)
+alpha_otu$ID1 <- row.names(alpha_otu)
+alpha_otu$ID1   <- gsub("_quant", "",alpha_otu$ID1, fixed = TRUE)
+alpha_otu$ID1   <- gsub("_unmaped", "",alpha_otu$ID1, fixed = TRUE)
+colnames(alpha_otu)[1] <- 'AMF_OTU_richness'
+AMF_abu <- left_join(AMF_abu,alpha_otu[,c(1,4)],by='ID1')
+AMF_abu <- left_join(AMF_abu,ko_fun_ave,by='ID1')
+AMF_abu1 <- AMF_abu[,c(2,5,11,13:22)]
+row.names(AMF_abu1) <- AMF_abu1$ID1
+
+data <- read.csv("rare_otu.csv",header = T)
+data$X   <- gsub("_quant", "",data$X, fixed = TRUE)
+data$X   <- gsub("_unmaped", "",data$X, fixed = TRUE)
+row.names(data) <-data$X
+data <- data[,-1]
+
+AMF_abu1 <- as.data.frame(AMF_abu1[row.names(AMF_abu1)%in%row.names(data),])
+identical(row.names(data),row.names(AMF_abu1))
+
+
+AMF_abu1 <- AMF_abu1[,-1] 
+
+colnames(AMF_abu1) <- c('AM fungal reads in RNA-seq%','AM fungal gene richness','AM fungal AAT expression','AM fungal AMT expression','AM fungal AQPF expression','AM fungal FAT expression','AM fungal MAPK expression','AM fungal MAT expression',  'AM fungal pheromone expression','AM fungal PT expression','AM fungal SPS expression','AM fungal ST expression')
+
+library(psych)
+library(dplyr)
+library(tidyverse)
+library(reshape2)
+r_result <- corr.test(data,AMF_abu1,method="spearman",adjust="fdr", alpha=.05, ci=FALSE)
+r <- 
+  r_result$r %>% 
+  melt() %>% 
+  set_names(c('Var1', 'Var2', 'r.value'))
+p <- 
+  r_result$p %>% 
+  melt() %>% 
+  set_names(c('Var1_p', 'Var2_p', 'p.value'))
+
+res <- cbind(r,p)
+res <- na.omit(res)
+
+result <- aggregate(res$p.value, by = list(Group = res$Var1), FUN = min)
+result[which(result$x <= 0.01),'sig'] <- 'significant'
+result <- subset(result, result$sig=="significant")
+res1 <- as.data.frame(res[res$Var1%in%result$Group,])
+
+corr_dta <- res1 %>% mutate(sig = insight::format_p(p.value, stars_only = TRUE)) %>% 
+  mutate(r_label = paste0(sprintf("%.2f", r.value))) 
+
+corr_dta1 <- subset(corr_dta, corr_dta$p.value <= 0.01)
+corr_dta2 <- subset(corr_dta, corr_dta$p.value > 0.01)
+corr_dta2$r_label <- ''
+corr_dta <- rbind(corr_dta1,corr_dta2)
+
+library(ggtree)
+library(ggplot2)
+tree<-read.tree("bayes_tree_ted.nhx")
+reserve_tip <- result$Group
+to_drop<-tree$tip.label[-match(reserve_tip,tree$tip.label)]
+tree_reduced<-treeio::drop.tip(tree,to_drop)
+p1 <- ggtree(tree_reduced)+xlim(0,0.8)+geom_tiplab()
+get_taxa_name(p1)
+
+library(ggsci)
+p2 <- ggplot(corr_dta,aes(x=Var2, y=Var1,fill=r.value))+ geom_tile(color="gray70",fill="white",size=0.3)+ 
+  geom_point(data=corr_dta,aes(x=Var2, y=Var1,size=abs(r.value)),color="white",shape=22)+ scale_y_discrete(limits = c(rev(get_taxa_name(p1))))+ 
+  scale_fill_gradientn(colours =colorRampPalette(c('#C6403D','white','#246BAE'))(111))+geom_text(aes(label = r_label), size=2.5, fontface = "bold")+
+  theme(axis.text.y= element_blank()) +  labs(x = NULL,y = NULL,fill="R value")+
+  theme(strip.text = element_text(size = 10,face = 'bold',colour = "gray2"))+  theme(axis.text=element_text(colour='black',size=10))+  
+  theme(axis.text.x = element_text(angle = 50, hjust = 0.95),legend.position = "right")
+
+library(ggpubr)
+library(patchwork)
+
+p1+p2+plot_layout(widths = c(3,4))
+
+ggsave("tedOTU_gene_corheatmap.pdf",width = 9, height =6)
